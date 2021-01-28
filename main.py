@@ -1,28 +1,41 @@
 import json
 
-import discord
+from discord.ext import commands
+
+# Create Ori instance
+ori = commands.Bot(command_prefix='>')
 
 
-class Ori(discord.Client):
-    async def on_ready(self):
-        print('Logged on as', self.user)
+# on_ready event
+@ori.event
+async def on_ready():
+    print('Logged on as', ori.user)
 
-    async def on_message(self, message):
 
-        # don't respond to ourselves
-        if message.author == self.user:
-            return
+# on_message event
+@ori.event
+async def on_message(message):
+    # don't respond to ourselves
+    if message.author == ori.user:
+        return  # Do nothing
 
-        # tridecalogism
-        if len(message.content) == 13:
-            await message.channel.send(':eboy:')
+    if message.content.startswith('$hello'):
+        await message.channel.send('Hello!')
+
+
+# Test '>spaghetti' command
+# TODO: figure out how commands work cause this ain't working!
+@ori.command()
+async def spaghetti(ctx):
+    await ctx.send('and meatballs')
 
 
 # Read auth.json
 with open('auth.json', 'r') as auth_file:
     data = auth_file.read()
 
+# Convert to a json object
 auth = json.loads(data)
 
-ori = Ori()
+# Run Ori using the auth token from 'auth.json'
 ori.run(auth['token'])
