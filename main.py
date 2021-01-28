@@ -3,7 +3,7 @@ import json
 import discord
 
 
-class Spaghettatron(discord.Client):
+class Ori(discord.Client):
     async def on_ready(self):
         print('Logged on as', self.user)
 
@@ -24,5 +24,5 @@ with open('auth.json', 'r') as auth_file:
 
 auth = json.loads(data)
 
-spaghettatron = Spaghettatron()
-spaghettatron.run(auth['token'])
+ori = Ori()
+ori.run(auth['token'])
