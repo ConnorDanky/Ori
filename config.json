@@ -1,5 +1,10 @@
 {
-  "listening_to": [
-    "ASMR bee stinging"
-  ]
+  "status": {
+    "playing": [
+      "Ori and the Blind Forest"
+    ],
+    "listening_to": [
+      "ASMR bee stinging"
+    ]
+  }
 }
