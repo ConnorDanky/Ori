@@ -32,16 +32,17 @@ async def on_message(message):
 @ori.event
 async def on_member_join(member):
     #format username
-    user = str(member)
-    userList = user.split('#') #get rid of tha ugly numbers
-    print(f'{userList[0]} has joined a server!') #prints to console a new member joined
+    
+    user = await formName(member)
+   
+    print(f'{user} has joined a server!') #prints to console a new member joined
     #channel info
     channel = discord.utils.get(member.guild.channels,name = "welcome-channel") #name is specific to whatever you want the welcome messages to appear in
     #create an embeded box to welcome the new member
     mBed = discord.Embed(
         colour = (discord.Colour.blue()),
         title = "Welcome Message",
-        description = "Hello, " + f'{userList[0]}' + ". Welcome to ConnorDanky's Arena!"
+        description = "Hello, " + f'{user}' + ". Welcome to ConnorDanky's Arena!"
 
     )
     #display our embeded box
@@ -50,17 +51,16 @@ async def on_member_join(member):
 #Support for outgoing players
 @ori.event
 async def on_member_remove(member):
-    #format username
-    user = str(member)
-    userList = user.split('#') #get rid of the ugly numbers  -- I REALLY NEED TO MAKE A FUNCTION TO CALL TO DO THIS
-    print(f'{userList[0]} has left a server!')#prints to console the player left
+    #format username    
+    user = await formName(member)   
+    print(f'{user} has left a server!')#prints to console the player left
     #channel info
     channel = discord.utils.get(member.guild.channels, name = "welcome-channel")#name is whatever channel you want the message to appear in
     #Embeded Box for display
     mBed = discord.Embed(
         colour = (discord.Colour.dark_purple()),
         title = "Leaving Message",
-        description = "You hate to see it, but " + f'{userList[0]}' + " had to go."
+        description = "You hate to see it, but " + f'{user}' + " had to go."
     )
     #display for the embeded box
     await channel.send(embed = mBed)
@@ -92,6 +92,15 @@ async def role(ctx, member: discord.Member):
     await member.add_roles(cool_red)
 
     await ctx.send(member.mention + " is now cool red! ")
+
+
+
+#formatting username function
+async def formName(member):
+    user = str(member)
+    userList = user.split('#')
+    user = str(userList[0])
+    return user
 
 
 # Load auth token from 'auth.json'
