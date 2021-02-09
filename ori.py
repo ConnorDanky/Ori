@@ -1,4 +1,5 @@
 import discord
+import random
 from discord.ext import commands
 
 import util.io_util as io_util
@@ -48,7 +49,7 @@ async def on_member_join(member):
     dmBed = discord.Embed(
         colour = (discord.Colour.blue()),
         title = "Hello! I am Ori!",
-        description = "I am your guide through the ConnorDanky_ Arena Discord Server. To see what I can do type !help. \n In case you have to leave, here is the link so you can come back. (http://discord.gg?FKGBjAdQPT)"
+        description = "I am your guide through the ConnorDanky_ Arena Discord Server. To see what I can do type !help. \n In case you have to leave, here is the link so you can come back. (http://discord.gg/FKGBjAdQPT)"
     )
     #display our embeded box
     await member.send(embed=dmBed)
@@ -73,7 +74,7 @@ async def on_member_remove(member):
     dmBed = discord.Embed(
         colour = (discord.Colour.dark_purple()),
         title = "Sorry to see you go :(",
-        description = "Unless you were banned, then good ridance! However if you are in good standing and would like return, just click this link : http://discord.gg?FKGBjAdQPT"
+        description = "Unless you were banned, then good ridance! However if you are in good standing and would like return, just click this link : http://discord.gg/FKGBjAdQPT"
     )
     #display for the embeded box
     
@@ -110,6 +111,20 @@ async def role(ctx, member: discord.Member):
 
     await ctx.send(member.mention + " is now cool red! ")
 
+
+#Slot Machine - Purely for fun. No money or anything
+@ori.command()
+async def slots(ctx):
+    final = []
+    for i in range(3):
+        a = random.choice([':ringed_planet:',':mushroom:',':rainbow:','<:opog:808534536270643270>',':gem:'])
+        final.append(a)
+    await ctx.send(str(final))
+
+    if final[0] == final[1] and final[0] == final[2] and final[1] == final[2]:
+        await ctx.send(ctx.author.mention + " won! " + '<:opog:808534536270643270>')
+    else:
+        await ctx.send("Better Luck next time!")
 
 
 #formatting username function
