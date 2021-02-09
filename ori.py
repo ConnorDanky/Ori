@@ -4,25 +4,13 @@ import discord
 from discord.ext import commands
 
 import util.io_util as io_util
+import util.string_util as string_util
 
 # adding intents
 intents = discord.Intents().all()
 
 # Create Ori instance
 ori = commands.Bot(command_prefix='!', intents=intents)
-
-
-# Get all roles from roles.json
-def get_roles(guild: discord.Guild):
-    roles = {}
-    for guild_role in guild.roles:
-        roles[guild_role.name] = guild_role.id
-    return roles
-
-
-# Get a role
-def get_role(guild: discord.Guild, name: str):
-    return guild.get_role(get_roles(guild)[name])
 
 
 # on_ready event
@@ -47,42 +35,45 @@ async def on_message(message):
 
 @ori.event
 async def on_member_join(member):
-    # format username
+    display_name = member.display_name
 
-    user = await form_name(member)
-
-    print(f'{user} has joined a server!')  # prints to console a new member joined
+    print(f'{display_name} has joined a server!')  # prints to console a new member joined
     # channel info
     channel = discord.utils.get(member.guild.channels,
                                 name="welcome-channel")  # name is specific to whatever you want the welcome messages
     # to appear in
     # create an embedded box to welcome the new member
     channel_embed = discord.Embed(
-        colour=(discord.Colour.blue()),
+        color=(discord.Color.blue()),
         title="Welcome Message",
-        description="Hello, " + f'{user}' + ". Welcome to ConnorDanky's Arena!"
+        description="Hello, " + f'{display_name}' + ". Welcome to ConnorDanky's Arena!"
 
     )
     user_embed = discord.Embed(
-        colour=(discord.Colour.blue()),
+        color=(discord.Color.blue()),
         title="Hello! I am Ori!",
         description="I am your guide through the ConnorDanky_ Arena Discord Server. To see what I can do type !help. "
                     "\n In case you have to leave, here is the link so you can come back. ("
-                    "http://discord.gg/FKGBjAdQPT) "
+                    "https://discord.gg/FKGBjAdQPT) "
     )
     # display our embedded box
     await member.send(embed=user_embed)
     await channel.send(embed=channel_embed)
 
 
+async def is_banned(member: discord.Member):
+    bans = await member.guild.bans()
+    return member in bans
+
+
 # Support for outgoing players
 @ori.event
-async def on_member_remove(member):
-    # format username
-    id_ = member.id
+async def on_member_remove(member: discord.Member):
+    member_id = member.id
 
-    user = await form_name(member)
-    print(f'{user} has left a server!')  # prints to console the player left
+    member_name = member.display_name
+    print(f'{member_name} has left {member.guild.name}!')  # prints to console the player left
+
     # channel info
     channel = discord.utils.get(member.guild.channels,
                                 name="welcome-channel")  # name is whatever channel you want the message to appear in
@@ -90,19 +81,21 @@ async def on_member_remove(member):
     channel_embed = discord.Embed(
         colour=(discord.Colour.dark_purple()),
         title="Leaving Message",
-        description="You hate to see it, but " + f'{user}' + " had to go."
+        description="You hate to see it, but " + f'{member_name}' + " had to go."
     )
     user_embed = discord.Embed(
         colour=(discord.Colour.dark_purple()),
         title="Sorry to see you go :(",
         description="Unless you were banned, then good riddance! However if you are in good standing and would like "
-                    "return, just click this link : http://discord.gg/FKGBjAdQPT "
+                    "return, just click this link : http://discord.gg/" +
+                    string_util.random_string(10, False, False) if is_banned(member) else "FKGBjAdQPT"  # Will give a
+        # randomly generated link if banned
     )
     # display for the embedded box
 
     await channel.send(embed=channel_embed)
 
-    left = ori.get_user(id_)
+    left = ori.get_user(member_id)
     await left.send(embed=user_embed)
 
 
@@ -124,6 +117,20 @@ async def define(ctx, *args):
     await ctx.send('https://www.merriam-webster.com/dictionary/' + '%20'.join(args))
 
 
+# 'rs' command
+@ori.command(name='rs')
+async def random_screenshot(ctx):
+    await ctx.send('https://prnt.sc/' + string_util.random_string(random.randrange(6, 7, 1), numbers=True))
+
+
+# 'test' command
+@ori.command()
+async def test(ctx):
+    # Check if its either Akoot_ or ConnorDanky_
+    if ctx.author.id in [435993495627628545, 143202195502923776]:
+        await ctx.send('https://discord.gg/' + string_util.random_string(10))
+
+
 # Slot bars
 slot_bars = [':ringed_planet:', ':mushroom:', ':rainbow:', '<:opog:808534536270643270>', ':gem:']
 
@@ -137,18 +144,10 @@ async def slots(ctx):
         final.append(a)
     await ctx.send("".join(final))
 
-    if final[0] == final[1] and final[0] == final[2] and final[1] == final[2]:
+    if all(element == final[0] for element in final):
         await ctx.send(ctx.author.mention + " won! " + '<:opog:808534536270643270>')
     else:
         await ctx.send("Better Luck next time!")
-
-
-# formatting username function
-async def form_name(member):
-    user = str(member)
-    user_list = user.split('#')
-    user = str(user_list[0])
-    return user
 
 
 # Load auth token from 'auth.json'
