@@ -45,13 +45,21 @@ async def on_member_join(member):
         description = "Hello, " + f'{user}' + ". Welcome to ConnorDanky's Arena!"
 
     )
+    dmBed = discord.Embed(
+        colour = (discord.Colour.blue()),
+        title = "Hello! I am Ori!",
+        description = "I am your guide through the ConnorDanky_ Arena Discord Server. To see what I can do type !help. \n In case you have to leave, here is the link so you can come back. (http://discord.gg?FKGBjAdQPT)"
+    )
     #display our embeded box
+    await member.send(embed=dmBed)
     await channel.send(embed=mBed)
 
 #Support for outgoing players
 @ori.event
 async def on_member_remove(member):
     #format username    
+    id_ = member.id
+
     user = await formName(member)   
     print(f'{user} has left a server!')#prints to console the player left
     #channel info
@@ -62,8 +70,17 @@ async def on_member_remove(member):
         title = "Leaving Message",
         description = "You hate to see it, but " + f'{user}' + " had to go."
     )
+    dmBed = discord.Embed(
+        colour = (discord.Colour.dark_purple()),
+        title = "Sorry to see you go :(",
+        description = "Unless you were banned, then good ridance! However if you are in good standing and would like return, just click this link : http://discord.gg?FKGBjAdQPT"
+    )
     #display for the embeded box
+    
     await channel.send(embed = mBed)
+
+    left = ori.get_user(id_)
+    await left.send(embed = dmBed)
 
 # 'spaghetti' command
 # TODO: figure out how commands work cause this ain't working!
