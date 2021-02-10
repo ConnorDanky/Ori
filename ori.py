@@ -65,6 +65,23 @@ async def is_banned(member: discord.Member):
     bans = await member.guild.bans()
     return member in bans
 
+# Easy Message Deleting
+
+@ori.command(aliases = ['d'])
+@commands.has_permissions(manage_messages = True)
+async def delete(ctx,amount = 2):
+    await ctx.channel.purge(limit = amount)
+
+
+# Kicking Members
+
+@ori.command(aliases = ['k'])
+@commands.has_permissions(kick_members = True)
+async def kick(ctx,member : discord.Member,*,reason="No reason given!"):
+    await member.send(f"You have been kicked from {member.guild.name}, because " + reason)
+    await member.send("Come back if you can follow the rules: https://discord.gg/FKGBjAdQPT")
+    await member.kick(reason=reason)
+
 
 # Support for outgoing players
 @ori.event
