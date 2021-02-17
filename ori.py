@@ -1,16 +1,12 @@
 import random
 import json
-import os
+
 
 import discord
 from discord.ext import commands
 
 import util.io_util as io_util
 import util.string_util as string_util
-
-# directing to account.json
-# This will be a problem
-os.chdir("C:\\Users\\conno\\Documents\\bot\\Ori\\ori")
 
 # adding intents
 intents = discord.Intents().all()
