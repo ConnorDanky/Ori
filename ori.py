@@ -1,10 +1,16 @@
 import random
+import json
+import os
 
 import discord
 from discord.ext import commands
 
 import util.io_util as io_util
 import util.string_util as string_util
+
+# directing to account.json
+# This will be a problem
+os.chdir("C:\\Users\\conno\\Documents\\bot\\Ori\\ori")
 
 # adding intents
 intents = discord.Intents().all()
@@ -28,6 +34,8 @@ async def on_message(message):
 
     # Do this or else commands won't work!
     await ori.process_commands(message)
+
+    await add_message(message.author)
 
 
 # Support for welcoming new members
@@ -54,7 +62,7 @@ async def on_member_join(member):
         title="Hello! I am Ori!",
         description="I am your guide through the ConnorDanky_ Arena Discord Server. To see what I can do type !help. "
                     "\n In case you have to leave, here is the link so you can come back. ("
-                    "https://discord.gg/FKGBjAdQPT) "
+                    "https://discord.gg/cyTEjWkyMb) "
     )
     # display our embedded box
     await member.send(embed=user_embed)
@@ -79,7 +87,7 @@ async def delete(ctx,amount = 2):
 @commands.has_permissions(kick_members = True)
 async def kick(ctx,member : discord.Member,*,reason="No reason given!"):
     await member.send(f"You have been kicked from {member.guild.name}, because " + reason)
-    await member.send("Come back if you can follow the rules: https://discord.gg/FKGBjAdQPT")
+    await member.send("Come back if you can follow the rules: https://discord.gg/cyTEjWkyMb")
     await member.kick(reason=reason)
 
 
@@ -105,7 +113,7 @@ async def on_member_remove(member: discord.Member):
         title="Sorry to see you go :(",
         description="Unless you were banned, then good riddance! However if you are in good standing and would like "
                     "return, just click this link : http://discord.gg/" +
-                    string_util.random_string(10, False, False) if is_banned(member) else "FKGBjAdQPT"  # Will give a
+                    string_util.random_string(10, False, False) if is_banned(member) else "cyTEjWkyMb"  # Will give a
         # randomly generated link if banned
     )
     # display for the embedded box
@@ -166,6 +174,76 @@ async def slots(ctx):
     else:
         await ctx.send("Better Luck next time!")
 
+
+# account systems - balance
+@ori.command()
+async def balance(ctx):
+    await open_account(ctx.author)
+    user = ctx.author
+
+    users = await get_inv_data()
+
+    points_amt = users[str(user.id)]["points"]
+    messages_amt = users[str(user.id)]["messages"]
+
+    m_bed = discord.Embed(title = f"{ctx.author.name}'s balance", color = discord.Color.red())
+    m_bed.add_field(name = "Points", value = points_amt)
+    m_bed.add_field(name = "Messages", value = messages_amt)
+
+    await ctx.send(embed = m_bed)
+
+
+# account systems - points(beg)
+@ori.command()
+async def work(ctx):
+    await open_account(ctx.author)
+    user = ctx.author
+    users = await get_inv_data()
+
+    earnings = random.randrange(101)
+    await ctx.send(f"You worked all day and got {earnings} points!!")   
+    
+    
+    users[str(user.id)]["points"] += earnings
+
+    with open("account.json","w") as f:
+        json.dump(users,f)
+
+
+# account systems - opening account
+async def open_account(user):
+    
+    users = await get_inv_data()
+
+    # checks if an account exsists
+    if str(user.id) in users:
+        return False
+    else:
+        users[str(user.id)] = {}
+        users[str(user.id)]["points"] = 0
+        users[str(user.id)]["messages"] = 0
+
+    with open("account.json","w") as f:
+        json.dump(users,f)
+    return True
+
+# account systems - inventory data
+async def get_inv_data():
+    with open("account.json","r") as f:
+        users = json.load(f)
+
+    return users
+
+# account systems - message counter
+async def add_message(caller):
+    await open_account(caller)
+    user = caller
+    users = await get_inv_data()    
+    
+    users[str(user.id)]["messages"] += 1
+
+    with open("account.json","w") as f:
+        json.dump(users,f)
 
 # Load auth token from 'auth.json'
 auth = io_util.load_json('auth.json')
