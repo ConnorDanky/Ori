@@ -1,6 +1,6 @@
-import random
 import json
-
+import os
+import random
 
 import discord
 from discord.ext import commands
@@ -69,19 +69,20 @@ async def is_banned(member: discord.Member):
     bans = await member.guild.bans()
     return member in bans
 
+
 # Easy Message Deleting
 
-@ori.command(aliases = ['d'])
-@commands.has_permissions(manage_messages = True)
-async def delete(ctx,amount = 2):
-    await ctx.channel.purge(limit = amount)
+@ori.command(aliases=['d'])
+@commands.has_permissions(manage_messages=True)
+async def delete(ctx, amount=2):
+    await ctx.channel.purge(limit=amount)
 
 
 # Kicking Members
 
-@ori.command(aliases = ['k'])
-@commands.has_permissions(kick_members = True)
-async def kick(ctx,member : discord.Member,*,reason="No reason given!"):
+@ori.command(aliases=['k'])
+@commands.has_permissions(kick_members=True)
+async def kick(member: discord.Member, *, reason="No reason given!"):
     await member.send(f"You have been kicked from {member.guild.name}, because " + reason)
     await member.send("Come back if you can follow the rules: https://discord.gg/cyTEjWkyMb")
     await member.kick(reason=reason)
@@ -182,11 +183,11 @@ async def balance(ctx):
     points_amt = users[str(user.id)]["points"]
     messages_amt = users[str(user.id)]["messages"]
 
-    m_bed = discord.Embed(title = f"{ctx.author.name}'s balance", color = discord.Color.red())
-    m_bed.add_field(name = "Points", value = points_amt)
-    m_bed.add_field(name = "Messages", value = messages_amt)
+    m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Color.red())
+    m_bed.add_field(name="Points", value=points_amt)
+    m_bed.add_field(name="Messages", value=messages_amt)
 
-    await ctx.send(embed = m_bed)
+    await ctx.send(embed=m_bed)
 
 
 # account systems - points(beg)
@@ -197,18 +198,16 @@ async def work(ctx):
     users = await get_inv_data()
 
     earnings = random.randrange(101)
-    await ctx.send(f"You worked all day and got {earnings} points!!")   
-    
-    
+    await ctx.send(f"You worked all day and got {earnings} points!!")
+
     users[str(user.id)]["points"] += earnings
 
-    with open("account.json","w") as f:
-        json.dump(users,f)
+    with open("account.json", "w") as f:
+        json.dump(users, f)
 
 
 # account systems - opening account
 async def open_account(user):
-    
     users = await get_inv_data()
 
     # checks if an account exsists
@@ -219,30 +218,38 @@ async def open_account(user):
         users[str(user.id)]["points"] = 0
         users[str(user.id)]["messages"] = 0
 
-    with open("account.json","w") as f:
-        json.dump(users,f)
+    with open("account.json", "w") as f:
+        json.dump(users, f)
     return True
+
 
 # account systems - inventory data
 async def get_inv_data():
-    with open("account.json","r") as f:
+    with open("account.json", "r") as f:
         users = json.load(f)
 
     return users
+
 
 # account systems - message counter
 async def add_message(caller):
     await open_account(caller)
     user = caller
-    users = await get_inv_data()    
-    
+    users = await get_inv_data()
+
     users[str(user.id)]["messages"] += 1
 
-    with open("account.json","w") as f:
-        json.dump(users,f)
+    with open("account.json", "w") as f:
+        json.dump(users, f)
 
-# Load auth token from 'auth.json'
-auth = io_util.load_json('auth.json')
+
+token_environment_key = "DISCORD_TOKEN"
+if token_environment_key in os.environ:
+    # Load token from the environment variable
+    token = os.environ[token_environment_key]
+else:
+    # Load auth token from 'auth.json'
+    token = io_util.load_json('auth.json')['token']
 
 # Run Ori using the auth token object
-ori.run(auth['token'])
+ori.run(token)
