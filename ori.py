@@ -15,6 +15,14 @@ intents = discord.Intents().all()
 ori = commands.Bot(command_prefix='!', intents=intents)
 
 
+# quote lists for member commands
+berry_quotes = [
+    "achoo", ":yawning_face:", "ez", ":speaking_head:", "a", "A", ":crab: money money money money :crab:", "how’d u know :eyes:", "brr", "we got the :b:read", "pfffft", "bonjour", "creenj", "si despacito", "eee", "mon nez est maintenant brisé", "il ne marche pas", "je suis pas un garçon?", ":speaking_head:  :speaker: AAAAA", "GM :clap: :clap:", "\*yaaawn\*", "im filling myself with chicken", "je ne sais pas!", "c'est moi","merci merci", "google translate n'existe pas", "don't wanna mess with bery", "mhm mhm", "now or I'll :punch:", "pretty good mhm", "rip the sandwich :pensive:", "all in a day’s work :yawning_face:", "perhaps another time!", "can't believe there's no orange team smh", "haven't i told u already to stop talking to urself!", "mwahahaha", "grrrr", "i always win", "makes you wonder and ponder...", "SI SI", "love him, or hate him, he be spitting garbage"
+]
+frozil_quotes = [
+    "Creenj", "!work!work!work", ":flushed:", "frozil", "eeeeeeee", "hmmm", "Kinda wanna try girl scout cookies", "cringe", "get shit on", "this game is rigger", "bruh", "imagine showering", "When rocket league", "0 points!", "Nothing? cringe", "we dont have water down here", "cant relate", "frozil opening u win in 1 move", "He's telling u no mimis", "Oh god oh god", "Oh shit", "No mimir", "mf made me order mexican stuff and didnt warn me about the hot salsa", "berry looks like a mushroom", "berry finna grenade launch akoots ass", "come play!", "Y'all always play when im not home :weary:", "Damn I guess im not really wanted *(edited)*", "I'm kidding btw I love rocket league", "Imagine playing rocket league", "Don't use robinhood for crypto", "no one likes u\nits the truth :rolling_eyes:", "get shit on berry", "GET SHIT ON", "this game is rigged", "frozil always wins", "Give me all your money\nThis is not financial advice", "I'm always right", "cant ban me\nim too epic", "imagine talking in spanish", "God I love elon musk", "U can't rap through text", "i see how it is", "like that huh", "tf is wrong with connor", "I'll 1v1 in rocket league", "elon musk tweeted about dogecoin", "america as a whole do be big", "less gooo", "where did u get that picture of me?", "im froz, you probably heard of me", "i think i have around 45 doge coins sitting somewhere"
+]
+
 # on_ready event
 @ori.event
 async def on_ready():
@@ -86,6 +94,18 @@ async def kick(member: discord.Member, *, reason="No reason given!"):
     await member.send(f"You have been kicked from {member.guild.name}, because " + reason)
     await member.send("Come back if you can follow the rules: https://discord.gg/cyTEjWkyMb")
     await member.kick(reason=reason)
+
+# !berry command
+@ori.command()
+async def berry(ctx):
+    a = random.choice(berry_quotes)
+    await ctx.send("<:berry:805607350307782717> - " + a)
+
+# !frozil command
+@ori.command()
+async def frozil(ctx):
+    a = random.choice(frozil_quotes)
+    await ctx.send("<:froz:804139444508557372> - " + a)
 
 
 # Support for outgoing players
