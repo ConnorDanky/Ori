@@ -8,6 +8,11 @@ from discord.ext import commands
 import util.io_util as io_util
 import util.string_util as string_util
 
+from googletrans import Translator
+
+# adding Translator
+translator = Translator()
+
 # adding intents
 intents = discord.Intents().all()
 
@@ -107,6 +112,24 @@ async def frozil(ctx):
     a = random.choice(frozil_quotes)
     await ctx.send("<:froz:804139444508557372> - " + a)
 
+
+# translation command
+@ori.command()
+async def trans(ctx,msg, dest = "en"):
+    msg.lower()
+    user = ctx.author
+    if ((msg == "help") and (dest == "en")):
+        from googletrans import LANGUAGES
+        langList = ""
+        for lang in LANGUAGES:
+            langList += (f'{lang} - {LANGUAGES[lang]}' + "\n")
+
+        mbed = discord.Embed(color=(discord.Color.blue()), title="Supported Languages for !trans", description= langList)
+        await user.send(embed = mbed)
+    else:
+
+        trans = translator.translate(msg, dest)
+        await ctx.send(f'{trans.origin} -> {trans.text}')
 
 # Support for outgoing players
 @ori.event
