@@ -137,8 +137,8 @@ async def frozil(ctx):
 
 # translation english command
 @ori.command(aliases=["transen", "tre"])
-async def translate_en(ctx, **msg):
-    await translate(ctx, " ".join(msg))
+async def translate_en(ctx, *args):
+    await translate(ctx, " ".join(args))
 
 
 # translation command
