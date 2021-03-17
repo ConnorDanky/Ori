@@ -136,13 +136,13 @@ async def frozil(ctx):
 
 
 # translation english command
-@ori.command(alias=["transen", "tre"])
+@ori.command(aliases=["transen", "tre"])
 async def translate_en(ctx, **msg):
     await translate(ctx, " ".join(msg))
 
 
 # translation command
-@ori.command(alias=["trans", "tr"])
+@ori.command(aliases=["trans", "tr"])
 async def translate(ctx, msg, dest="en"):
     msg.lower()
     user = ctx.author
