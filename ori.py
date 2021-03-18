@@ -19,6 +19,9 @@ intents = discord.Intents().all()
 # Create Ori instance
 ori = commands.Bot(command_prefix='!', intents=intents)
 
+# Banned word list
+filtered_words = ["cobner","Cobner"]
+
 # quote lists for member commands
 berry_quotes = [
     "achoo", ":yawning_face:", "ez", ":speaking_head:", "a", "A", ":crab: money money money money :crab:",
@@ -65,6 +68,12 @@ async def on_message(message):
     await ori.process_commands(message)
 
     await add_message(message.author)
+
+    # banned words in chat
+    for word in filtered_words:
+        if word in message.content:
+            
+            await message.delete()
 
 
 # Support for welcoming new members
@@ -119,6 +128,38 @@ async def kick(ctx, member: discord.Member, *, reason="No reason given!"):
     await member.send(f"You have been kicked from {member.guild.name}, because " + reason)
     await member.send("Come back if you can follow the rules: https://discord.gg/cyTEjWkyMb")
     await member.kick(reason=reason)
+
+# Polls
+@ori.command()
+@commands.has_role("mod-squad")
+
+async def poll(ctx,question,choices):
+    emoteList = ["regional_indicator_a","regional_indicator_b","regional_indicator_c","regional_indicator_d",
+    "regional_indicator_e","regional_indicator_f","regional_indicator_g","regional_indicator_h","regional_indicator_i",
+    "regional_indicator_j"]
+
+    emoteList2 = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"]
+
+    choiceList = choices.split("/")
+    output = ""
+    counter = 0
+    for i in choiceList:
+        output += ":"+ emoteList[counter] + ":"
+        output += f" --- {choiceList[counter]} \n"
+        counter += 1
+
+    poll_embed = discord.Embed(
+        color=(discord.Color.greyple()),
+        title=f"Poll: {question}",
+        description= output
+    )
+    message = await ctx.send(embed = poll_embed)
+
+    emoteCounter = 0
+    for i in emoteList2:
+        if (emoteCounter < counter):
+            await message.add_reaction(i)
+            emoteCounter += 1
 
 
 # !berry command
