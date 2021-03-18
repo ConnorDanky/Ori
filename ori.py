@@ -95,7 +95,7 @@ async def delete(ctx, amount=2):
 
 @ori.command(aliases=['k'])
 @commands.has_permissions(kick_members=True)
-async def kick(member: discord.Member, *, reason="No reason given!"):
+async def kick(ctx, member: discord.Member, *, reason="No reason given!"):
     await member.send(f"You have been kicked from {member.guild.name}, because " + reason)
     await member.send("Come back if you can follow the rules: https://discord.gg/cyTEjWkyMb")
     await member.kick(reason=reason)
