@@ -133,7 +133,7 @@ async def ticket(ctx,*,message):
         title=f"TICKET! (submitted by: {member.display_name})",
         description=message + "\n"
     )
-    await ctx.send("Thanks!")
+    await ctx.send("Thanks for your report!")
     await channel.send("<@&823299908105666620>")
     await channel.send(embed = ticket_embed)
 
