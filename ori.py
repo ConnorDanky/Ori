@@ -120,6 +120,25 @@ async def delete(ctx, amount=2):
     await ctx.channel.purge(limit=amount)
 
 
+# !ticket
+@ori.command()
+async def ticket(ctx,*,message):
+    member = ctx.author
+    channel = discord.utils.get(member.guild.channels,
+                                name="tickets")
+    if message == "":
+        return
+    ticket_embed = discord.Embed(
+        color=(discord.Color.gold()),
+        title=f"TICKET! (submitted by: {member.display_name})",
+        description=message + "\n"
+    )
+    await ctx.send("Thanks!")
+    await channel.send("<@&823299908105666620>")
+    await channel.send(embed = ticket_embed)
+
+
+
 # Kicking Members
 
 @ori.command(aliases=['k'])
