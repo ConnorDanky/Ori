@@ -122,21 +122,29 @@ async def delete(ctx, amount=2):
 
 # !ticket
 @ori.command()
-async def ticket(ctx,*,message):
+async def ticket(ctx,level,*,message):
     member = ctx.author
+    level = level.lower()
     channel = discord.utils.get(member.guild.channels,
                                 name="tickets")
     if message == "":
         return
-    ticket_embed = discord.Embed(
+    ticket_high_embed = discord.Embed(
         color=(discord.Color.gold()),
         title=f"TICKET! (submitted by: {member.display_name})",
-        description=message + "\n"
+        description="Importance: HIGH\n" + message + "\n"
+    )
+    ticket_low_embed = discord.Embed(
+        color=(discord.Color.dark_gold()),
+        title=f"TICKET! (submitted by: {member.display_name})",
+        description="Importance: LOW\n" + message + "\n"
     )
     await ctx.send("Thanks for your report!")
-    await channel.send("<@&823299908105666620>")
-    await channel.send(embed = ticket_embed)
-
+    if level == "high":
+        await channel.send("<@&823299908105666620>")
+        await channel.send(embed = ticket_high_embed)
+    if level == "low":
+        await channel.send(embed = ticket_low_embed)
 
 
 # Kicking Members
