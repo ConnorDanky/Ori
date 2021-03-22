@@ -139,11 +139,13 @@ async def ticket(ctx,level,*,message):
         title=f"TICKET! (submitted by: {member.display_name})",
         description="Importance: LOW\n" + message + "\n"
     )
-    await ctx.send("Thanks for your report!")
+    
     if level == "high":
+        await ctx.send("Thanks for your report!")
         await channel.send("<@&823299908105666620>")
         await channel.send(embed = ticket_high_embed)
     if level == "low":
+        await ctx.send("Thanks for your report!")
         await channel.send(embed = ticket_low_embed)
 
 
