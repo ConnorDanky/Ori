@@ -7,6 +7,8 @@ import googletrans
 from discord.ext import commands
 from googletrans import Translator
 
+from prsaw import RandomStuff
+
 import util.io_util as io_util
 import util.string_util as string_util
 
@@ -189,6 +191,18 @@ async def poll(ctx,question,choices):
         if (emoteCounter < counter):
             await message.add_reaction(i)
             emoteCounter += 1
+
+
+# !joke command
+@ori.command()
+async def joke(ctx):
+
+    rs = RandomStuff(async_mode=True)
+
+    joke = await rs.get_joke()
+
+    await ctx.send(joke)
+
 
 
 # !fort command
