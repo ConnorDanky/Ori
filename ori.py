@@ -202,9 +202,9 @@ async def poll(ctx,question,choices):
 @ori.command()
 async def joke(ctx):
 
-    rs = RandomStuff(async_mode=True)
+    rs = RandomStuff(async_mode=True,api_key = api_key)
 
-    joke = await rs.get_joke(api_key = api_key)
+    joke = await rs.get_joke()
 
     await ctx.send(joke['setup'])
     time.sleep(3)
