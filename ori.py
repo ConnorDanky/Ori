@@ -13,6 +13,10 @@ from prsaw import RandomStuff
 import util.io_util as io_util
 import util.string_util as string_util
 
+
+# my Random-Stuff-api key... (Need to secure this later)
+api_key = "WrrMqKwh369g"
+
 # adding Translator
 translator = Translator()
 
@@ -200,7 +204,7 @@ async def joke(ctx):
 
     rs = RandomStuff(async_mode=True)
 
-    joke = await rs.get_joke()
+    joke = await rs.get_joke(api_key = api_key)
 
     await ctx.send(joke['setup'])
     time.sleep(3)
