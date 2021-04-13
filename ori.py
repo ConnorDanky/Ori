@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import time
 
 import discord
 import googletrans
@@ -201,7 +202,9 @@ async def joke(ctx):
 
     joke = await rs.get_joke()
 
-    await ctx.send(joke)
+    await ctx.send(joke['setup'])
+    time.sleep(3)
+    await ctx.send("||" + joke['delivery'] + "||")
 
 
 
