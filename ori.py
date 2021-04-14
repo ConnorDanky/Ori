@@ -204,7 +204,7 @@ async def joke(ctx):
 
     rs = RandomStuff(async_mode=True,api_key = api_key)
 
-    joke = await rs.get_joke()
+    joke = await rs.get_joke(_type = "dev")
 
     await ctx.send(joke['setup'])
     time.sleep(3)
