@@ -206,9 +206,12 @@ async def joke(ctx):
 
     joke = await rs.get_joke(_type = "dev")
 
-    await ctx.send(joke)
-    time.sleep(3)
-    await ctx.send("||" + joke['delivery'] + "||")
+    if joke['type'] == 'single':
+        await ctx.send(joke['joke'])
+    if joke['type'] == 'twopart':
+        await ctx.send(joke['setup'])
+        time.sleep(3)
+        await ctx.send("||" + joke['delivery'] + "||")
 
 
 
