@@ -226,14 +226,14 @@ async def delete(ctx, amount=2):
     await ctx.channel.purge(limit=amount)
 
 
-@ori.command()
-async def test6(ctx: discord.ext.commands.Context):
-    points = get_points(ctx.author) + 1
-    pinecones = get_pinecones(ctx.author) + 1
-    print("points:", points, "pinecones:", pinecones)
-    set_points(ctx.author, points)
-    set_pinecones(ctx.author, pinecones)
-    await ctx.send(f"you have {points} points and {pinecones} pinecones.")
+# @ori.command()
+# async def test6(ctx: discord.ext.commands.Context):
+#     points = get_points(ctx.author) + 1
+#     pinecones = get_pinecones(ctx.author) + 1
+#     print("points:", points, "pinecones:", pinecones)
+#     set_points(ctx.author, points)
+#     set_pinecones(ctx.author, pinecones)
+#     await ctx.send(f"you have {points} points and {pinecones} pinecones.")
 
 
 # !ticket
