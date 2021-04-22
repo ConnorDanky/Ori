@@ -468,7 +468,7 @@ async def translate_en(ctx, *args):
 async def translate(ctx, msg, dest="en"):
     msg.lower()
     user = ctx.author
-    if msg is "help" and dest is "en":
+    if msg is "help" and dest == "en":
         lang_list = ""
         for lang in googletrans.LANGUAGES:
             lang_list += (f'{lang} - {googletrans.LANGUAGES[lang]}' + "\n")
