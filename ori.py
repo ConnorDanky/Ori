@@ -155,7 +155,7 @@ async def get_random_message(ctx: discord.ext.commands.Context, person: str):
                     if message.content not in messages:
                         messages.append(message.content)
     guy['messages'] = messages
-    return random.choice(messages)
+    return random.choice(messages).replace('@', '@​\u200b')
 
 
 # on_ready event
