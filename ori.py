@@ -645,7 +645,7 @@ if token_environment_key in os.environ:
 
     # Load db
     result = re.match(r'\w+://(\w+):(\w+)@([a-z0-9.-]+):(\d+)/(\w+)', os.environ[database_url_environment_key])
-    connect_to_db(result.group(3), result.group(2), result.group(1), result.group(2))
+    connect_to_db(result.group(3), result.group(5), result.group(1), result.group(2))
 else:
     # Load auth token from 'auth.json'
     auth = io_util.load_json('auth.json')
