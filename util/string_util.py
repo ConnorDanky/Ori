@@ -61,3 +61,13 @@ def random_string(length, spaces=False, special=False, numbers=False, capitals=T
             string = markdown_escape(string)
 
     return string
+
+
+def upper(text: str):
+    if len(text) > 0:
+        if len(text) >= 2:
+            return text[0].upper() + text[1:]
+        else:
+            return text[0].upper()
+    else:
+        return text

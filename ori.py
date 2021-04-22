@@ -1,18 +1,18 @@
 import json
 import os
 import random
+import re
 import time
 
 import discord
 import googletrans
+import psycopg2
 from discord.ext import commands
 from googletrans import Translator
-
 from prsaw import RandomStuff
 
 import util.io_util as io_util
 import util.string_util as string_util
-
 
 # my Random-Stuff-api key... (Need to secure this later)
 api_key = "WrrMqKwh369g"
@@ -27,7 +27,7 @@ intents = discord.Intents().all()
 ori = commands.Bot(command_prefix='!', intents=intents)
 
 # Banned word list
-filtered_words = ["cobner","Cobner"]
+filtered_words = ["cobner", "Cobner"]
 
 # quote lists for member commands
 berry_quotes = [
@@ -57,6 +57,106 @@ frozil_quotes = [
     "im froz, you probably heard of me", "i think i have around 45 doge coins sitting somewhere"
 ]
 
+lookup_text = [
+    "I am going to find the very best {0} quotes for your enjoyment!",
+    "{0} is so cool and has such amazing quotes.. Let me find some real quick!",
+    "Hold on, looking up some classic {0} quotes...",
+    "Oh, you want a {0} quote? Let me pick some of my favorites...",
+    "{0}! Always saying the wackiest stuff.. In fact, I have a list of quotes! let me find it hold on..."
+]
+
+peoples = io_util.load_json("people.json")
+
+# for key in peoples: print( f"@ori.command()\nasync def {key}(ctx):\n    message = await get_random_message(ctx,
+# '{key}')\n    await ctx.send(" f'"> " + message + " *- " + string_util.upper("{key}") + "*")\n')
+
+db_connection = None
+db_cursor = None
+
+
+def connect_to_db(host, database, user, password):
+    global db_cursor
+    global db_connection
+    db_connection = psycopg2.connect(f"host='{host}' dbname='{database}' user='{user}' password='{password}'")
+    db_cursor = db_connection.cursor()
+    print("connected to", database, "at", host, "as", user)
+
+
+def disconnect_from_db():
+    if db_connection:
+        db_connection.close()
+
+
+def fetch_cursor(default):
+    row = db_cursor.fetchone()
+    if row is None:
+        return default
+    else:
+        return row[0]
+
+
+def get_points(member: discord.Member):
+    statement = f"SELECT points FROM accounts WHERE id={member.id}"
+    db_cursor.execute(statement)
+    return fetch_cursor(0)
+
+
+def set_points(member: discord.Member, amount: int):
+    ps = f"INSERT INTO accounts VALUES ({member.id}, {amount}, 0, NULL) ON CONFLICT (id) DO UPDATE SET points={amount}"
+    print(ps)
+    db_cursor.execute(ps)
+    db_connection.commit()
+
+
+def get_pinecones(member: discord.Member):
+    db_cursor.execute(f"SELECT pinecones FROM accounts WHERE id={member.id}")
+    return fetch_cursor(0)
+
+
+def set_pinecones(member: discord.Member, amount: int):
+    ps = f"INSERT INTO accounts VALUES ({member.id}, 0, {amount}, NULL) ON CONFLICT (id) DO UPDATE SET pinecones={amount}"
+    db_cursor.execute(ps)
+    db_connection.commit()
+
+
+def get_inventory(member: discord.Member):
+    db_cursor.execute(f"SELECT inventory FROM accounts WHERE id={member.id}")
+    return fetch_cursor(0)
+
+
+def set_inventory(member: discord.Member, inventory: dict):
+    db_cursor.execute(f"UPDATE accounts SET inventory=%s WHERE id={member.id}", inventory)
+    db_connection.commit()
+
+
+def get_stat(member: discord.Member, key: str):
+    db_cursor.execute(f"SELECT {key} FROM stats WHERE id=%s", member.id)
+    return fetch_cursor("")
+
+
+def set_stat(member: discord.Member, key: str, value):
+    ps = f"INSERT INTO accounts (id, {key}) VALUES ({member.id}, {value}) ON CONFLICT (id) DO UPDATE SET {key}=%s"
+    db_cursor.execute(ps, value)
+    db_connection.commit()
+
+
+# get a random message from a Member
+async def get_random_message(ctx: discord.ext.commands.Context, person: str):
+    guy = peoples[person]
+    _id = guy['id']
+    if 'messages' in guy:
+        messages = guy['messages']
+    else:
+        await ctx.send(random.choice(lookup_text).format(string_util.upper(person)))
+        messages = []
+        for channel in ctx.guild.text_channels:
+            async for message in channel.history(limit=500):
+                if message.author.id == _id and message.content and message.content[0] != '!':
+                    if message.content not in messages:
+                        messages.append(message.content)
+    guy['messages'] = messages
+    return random.choice(messages)
+
 
 # on_ready event
 @ori.event
@@ -79,7 +179,6 @@ async def on_message(message):
     # banned words in chat
     for word in filtered_words:
         if word in message.content:
-            
             await message.delete()
 
 
@@ -127,9 +226,19 @@ async def delete(ctx, amount=2):
     await ctx.channel.purge(limit=amount)
 
 
+@ori.command()
+async def test6(ctx: discord.ext.commands.Context):
+    points = get_points(ctx.author) + 1
+    pinecones = get_pinecones(ctx.author) + 1
+    print("points:", points, "pinecones:", pinecones)
+    set_points(ctx.author, points)
+    set_pinecones(ctx.author, pinecones)
+    await ctx.send(f"you have {points} points and {pinecones} pinecones.")
+
+
 # !ticket
 @ori.command()
-async def ticket(ctx,level,*,message):
+async def ticket(ctx, level, *, message):
     member = ctx.author
     level = level.lower()
     channel = discord.utils.get(member.guild.channels,
@@ -146,14 +255,14 @@ async def ticket(ctx,level,*,message):
         title=f"TICKET! (submitted by: {member.display_name})",
         description="Importance: LOW\n" + message + "\n"
     )
-    
+
     if level == "high":
         await ctx.send("Thanks for your report!")
         await channel.send("<@&823299908105666620>")
-        await channel.send(embed = ticket_high_embed)
+        await channel.send(embed=ticket_high_embed)
     if level == "low":
         await ctx.send("Thanks for your report!")
-        await channel.send(embed = ticket_low_embed)
+        await channel.send(embed=ticket_low_embed)
 
 
 # Kicking Members
@@ -165,80 +274,187 @@ async def kick(ctx, member: discord.Member, *, reason="No reason given!"):
     await member.send("Come back if you can follow the rules: https://discord.gg/cyTEjWkyMb")
     await member.kick(reason=reason)
 
+
 # Polls
 @ori.command()
 @commands.has_role("mod-squad")
+async def poll(ctx, question, choices):
+    emote_list = ["regional_indicator_a", "regional_indicator_b", "regional_indicator_c", "regional_indicator_d",
+                  "regional_indicator_e", "regional_indicator_f", "regional_indicator_g", "regional_indicator_h",
+                  "regional_indicator_i",
+                  "regional_indicator_j"]
 
-async def poll(ctx,question,choices):
-    emoteList = ["regional_indicator_a","regional_indicator_b","regional_indicator_c","regional_indicator_d",
-    "regional_indicator_e","regional_indicator_f","regional_indicator_g","regional_indicator_h","regional_indicator_i",
-    "regional_indicator_j"]
+    emote_list2 = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"]
 
-    emoteList2 = ["🇦","🇧","🇨","🇩","🇪","🇫","🇬","🇭","🇮","🇯"]
-
-    choiceList = choices.split("/")
+    choice_list = choices.split("/")
     output = ""
     counter = 0
-    for i in choiceList:
-        output += ":"+ emoteList[counter] + ":"
-        output += f" --- {choiceList[counter]} \n"
+    for i in choice_list:
+        output += ":" + emote_list[counter] + ":"
+        output += f" --- {choice_list[counter]} \n"
         counter += 1
 
     poll_embed = discord.Embed(
         color=(discord.Color.greyple()),
         title=f"Poll: {question}",
-        description= output
+        description=output
     )
-    message = await ctx.send(embed = poll_embed)
+    message = await ctx.send(embed=poll_embed)
 
-    emoteCounter = 0
-    for i in emoteList2:
-        if (emoteCounter < counter):
+    emote_counter = 0
+    for i in emote_list2:
+        if emote_counter < counter:
             await message.add_reaction(i)
-            emoteCounter += 1
+            emote_counter += 1
+
+
+@ori.command()
+async def connor(ctx):
+    message = await get_random_message(ctx, 'connor')
+    await ctx.send("> " + message + " *- " + string_util.upper("connor") + "*")
+
+
+@ori.command()
+async def akoot(ctx):
+    message = await get_random_message(ctx, 'akoot')
+    await ctx.send("> " + message + " *- " + string_util.upper("akoot") + "*")
 
 
 # !joke command
 @ori.command()
 async def joke(ctx):
+    rs = RandomStuff(async_mode=True, api_key=api_key)
 
-    rs = RandomStuff(async_mode=True,api_key = api_key)
+    _joke = rs.get_joke(_type="dev")
 
-    joke = await rs.get_joke(_type = "dev")
-
-    if joke['type'] == 'single':
-        await ctx.send(joke['joke'])
-    if joke['type'] == 'twopart':
-        await ctx.send(joke['setup'])
+    if _joke['type'] == 'single':
+        await ctx.send(_joke['joke'])
+    if _joke['type'] == 'twopart':
+        await ctx.send(_joke['setup'])
         time.sleep(3)
-        await ctx.send("||" + joke['delivery'] + "||")
-
+        await ctx.send("||" + _joke['delivery'] + "||")
 
 
 # !fort command
 @ori.command()
 async def fort(ctx):
-    fortStr = "<:rLStep:813281418699603968><:rRStep:813282156603768832><:rLStep:813281418699603968><:rRStep:813282156603768832>⬛⬛⬛<:rLStep:813281418699603968><:rRStep:813282156603768832><:rLStep:813281418699603968><:rRStep:813282156603768832>"
-    fortStr += "\n<:rDRStep:813282507079680031><:rBrick:813276220376219690><:rBrick:813276220376219690><:rDLStep:813282562067660821>⬛⬛⬛<:rDRStep:813282507079680031><:rBrick:813276220376219690><:rBrick:813276220376219690><:rDLStep:813282562067660821>"
-    fortStr += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690>⬛⬛⬛⬛⬛<:rBrick:813276220376219690><:rBrick:813276220376219690>⬛"
-    fortStr += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rRStep:813282156603768832><:rLStep:813281418699603968><:rBrick:813276220376219690><:rRStep:813282156603768832><:rLStep:813281418699603968><:rBrick:813276220376219690><:rBrick:813276220376219690>"
-    fortStr += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690><:rDLStep:813282562067660821>⬛<:rDRStep:813282507079680031><:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>"
-    fortStr += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>⬛⬛⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>"
-    fortStr += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>⬛⬛⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>"
-    await ctx.send(fortStr)
+    fort_str = "<:rLStep:813281418699603968><:rRStep:813282156603768832><:rLStep:813281418699603968><:rRStep" \
+               ":813282156603768832>⬛⬛⬛<:rLStep:813281418699603968><:rRStep:813282156603768832><:rLStep" \
+               ":813281418699603968><:rRStep:813282156603768832> "
+    fort_str += "\n<:rDRStep:813282507079680031><:rBrick:813276220376219690><:rBrick:813276220376219690><:rDLStep" \
+                ":813282562067660821>⬛⬛⬛<:rDRStep:813282507079680031><:rBrick:813276220376219690><:rBrick" \
+                ":813276220376219690><:rDLStep:813282562067660821> "
+    fort_str += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690>⬛⬛⬛⬛⬛<:rBrick:813276220376219690><:rBrick" \
+                ":813276220376219690>⬛ "
+    fort_str += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rRStep:813282156603768832><:rLStep" \
+                ":813281418699603968><:rBrick:813276220376219690><:rRStep:813282156603768832><:rLStep" \
+                ":813281418699603968><:rBrick:813276220376219690><:rBrick:813276220376219690> "
+    fort_str += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690><:rDLStep" \
+                ":813282562067660821>⬛<:rDRStep:813282507079680031><:rBrick:813276220376219690><:rBrick" \
+                ":813276220376219690><:rBrick:813276220376219690> "
+    fort_str += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>⬛⬛⬛<:rBrick" \
+                ":813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690> "
+    fort_str += "\n⬛<:rBrick:813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690>⬛⬛⬛<:rBrick" \
+                ":813276220376219690><:rBrick:813276220376219690><:rBrick:813276220376219690> "
+    await ctx.send(fort_str)
 
-# !berry command
+
 @ori.command()
 async def berry(ctx):
-    a = random.choice(berry_quotes)
-    await ctx.send("<:berry:805607350307782717> - " + a)
+    message = await get_random_message(ctx, 'berry')
+    await ctx.send("> " + message + " *- " + string_util.upper("berry") + "*")
 
 
-# !frozil command
 @ori.command()
 async def frozil(ctx):
-    a = random.choice(frozil_quotes)
-    await ctx.send("<:froz:804139444508557372> - " + a)
+    message = await get_random_message(ctx, 'frozil')
+    await ctx.send("> " + message + " *- " + string_util.upper("frozil") + "*")
+
+
+@ori.command()
+async def sammi(ctx):
+    message = await get_random_message(ctx, 'sammi')
+    await ctx.send("> " + message + " *- " + string_util.upper("sammi") + "*")
+
+
+@ori.command()
+async def toast(ctx):
+    message = await get_random_message(ctx, 'toast')
+    await ctx.send("> " + message + " *- " + string_util.upper("toast") + "*")
+
+
+@ori.command()
+async def kate(ctx):
+    message = await get_random_message(ctx, 'kate')
+    await ctx.send("> " + message + " *- " + string_util.upper("kate") + "*")
+
+
+@ori.command()
+async def xal(ctx):
+    message = await get_random_message(ctx, 'xal')
+    await ctx.send("> " + message + " *- " + string_util.upper("xal") + "*")
+
+
+@ori.command()
+async def bguette(ctx):
+    message = await get_random_message(ctx, 'bguette')
+    await ctx.send("> " + message + " *- " + string_util.upper("bguette") + "*")
+
+
+@ori.command()
+async def robin(ctx):
+    message = await get_random_message(ctx, 'robin')
+    await ctx.send("> " + message + " *- " + string_util.upper("robin") + "*")
+
+
+@ori.command()
+async def pipe(ctx):
+    message = await get_random_message(ctx, 'pipe')
+    await ctx.send("> " + message + " *- " + string_util.upper("pipe") + "*")
+
+
+@ori.command()
+async def ezek(ctx):
+    message = await get_random_message(ctx, 'ezek')
+    await ctx.send("> " + message + " *- " + string_util.upper("ezek") + "*")
+
+
+@ori.command()
+async def zythose(ctx):
+    message = await get_random_message(ctx, 'zythose')
+    await ctx.send("> " + message + " *- " + string_util.upper("zythose") + "*")
+
+
+@ori.command()
+async def yoda(ctx):
+    message = await get_random_message(ctx, 'yoda')
+    await ctx.send("> " + message + " *- " + string_util.upper("yoda") + "*")
+
+
+@ori.command()
+async def tizzle(ctx):
+    message = await get_random_message(ctx, 'tizzle')
+    await ctx.send("> " + message + " *- " + string_util.upper("tizzle") + "*")
+
+
+@ori.command()
+async def caleb(ctx):
+    message = await get_random_message(ctx, 'caleb')
+    await ctx.send("> " + message + " *- " + string_util.upper("caleb") + "*")
+
+
+# # !berry command
+# @ori.command()
+# async def berry(ctx):
+#     a = random.choice(berry_quotes)
+#     await ctx.send("<:berry:805607350307782717> - " + a)
+#
+#
+# # !frozil command
+# @ori.command()
+# async def frozil(ctx):
+#     a = random.choice(frozil_quotes)
+#     await ctx.send("<:froz:804139444508557372> - " + a)
 
 
 # translation english command
@@ -388,7 +604,7 @@ async def work(ctx):
 async def open_account(user):
     users = await get_inv_data()
 
-    # checks if an account exsists
+    # checks if an account exists
     if str(user.id) in users:
         return False
     else:
@@ -422,12 +638,20 @@ async def add_message(caller):
 
 
 token_environment_key = "DISCORD_TOKEN"
+database_url_environment_key = "DATABASE_URL"
 if token_environment_key in os.environ:
     # Load token from the environment variable
     token = os.environ[token_environment_key]
+
+    # Load db
+    result = re.match(r'\w+://(\w+):(\w+)@([a-z0-9.-]+):(\d+)/(\w+)', os.environ[database_url_environment_key])
+    connect_to_db(result.group(3), result.group(2), result.group(1), result.group(2))
 else:
     # Load auth token from 'auth.json'
-    token = io_util.load_json('auth.json')['token']
+    auth = io_util.load_json('auth.json')
+    token = auth['token']
+    db = auth['db']
+    connect_to_db(db['host'], db['database'], db['username'], db['password'])
 
 # Run Ori using the auth token object
 ori.run(token)
