@@ -14,8 +14,7 @@ from prsaw import RandomStuff
 import util.io_util as io_util
 import util.string_util as string_util
 
-# my Random-Stuff-api key... (Need to secure this later)
-api_key = "WrrMqKwh369g"
+keys = {}
 
 # adding Translator
 translator = Translator()
@@ -27,34 +26,8 @@ intents = discord.Intents().all()
 ori = commands.Bot(command_prefix='!', intents=intents)
 
 # Banned word list
-filtered_words = ["cobner", "Cobner"]
-
-# quote lists for member commands
-berry_quotes = [
-    "achoo", ":yawning_face:", "ez", ":speaking_head:", "a", "A", ":crab: money money money money :crab:",
-    "how’d u know :eyes:", "brr", "we got the :b:read", "pfffft", "bonjour", "creenj", "si despacito", "eee",
-    "mon nez est maintenant brisé", "il ne marche pas", "je suis pas un garçon?", ":speaking_head:  :speaker: AAAAA",
-    "GM :clap: :clap:", "\\*yaaawn\\*", "im filling myself with chicken", "je ne sais pas!", "c'est moi", "merci merci",
-    "google translate n'existe pas", "don't wanna mess with bery", "mhm mhm", "now or I'll :punch:", "pretty good mhm",
-    "rip the sandwich :pensive:", "all in a day’s work :yawning_face:", "perhaps another time!",
-    "can't believe there's no orange team smh", "haven't i told u already to stop talking to urself!", "mwahahaha",
-    "grrrr", "i always win", "makes you wonder and ponder...", "SI SI", "love him, or hate him, he be spitting garbage"
-]
-frozil_quotes = [
-    "Creenj", "!work!work!work", ":flushed:", "frozil", "eeeeeeee", "hmmm", "Kinda wanna try girl scout cookies",
-    "cringe", "get shit on", "this game is rigger", "bruh", "imagine showering", "When rocket league", "0 points!",
-    "Nothing? cringe", "we dont have water down here", "cant relate", "frozil opening u win in 1 move",
-    "He's telling u no mimis", "Oh god oh god", "Oh shit", "No mimir",
-    "mf made me order mexican stuff and didnt warn me about the hot salsa", "berry looks like a mushroom",
-    "berry finna grenade launch akoots ass", "come play!", "Y'all always play when im not home :weary:",
-    "Damn I guess im not really wanted *(edited)*", "I'm kidding btw I love rocket league",
-    "Imagine playing rocket league", "Don't use robinhood for crypto", "no one likes u\nits the truth :rolling_eyes:",
-    "get shit on berry", "GET SHIT ON", "this game is rigged", "frozil always wins",
-    "Give me all your money\nThis is not financial advice", "I'm always right", "cant ban me\nim too epic",
-    "imagine talking in spanish", "God I love elon musk", "U can't rap through text", "i see how it is",
-    "like that huh", "tf is wrong with connor", "I'll 1v1 in rocket league", "elon musk tweeted about dogecoin",
-    "america as a whole do be big", "less gooo", "where did u get that picture of me?",
-    "im froz, you probably heard of me", "i think i have around 45 doge coins sitting somewhere"
+filtered_words = [
+    "cobner", "Cobner"
 ]
 
 lookup_text = [
@@ -130,13 +103,13 @@ def set_inventory(member: discord.Member, inventory: dict):
 
 
 def get_stat(member: discord.Member, key: str):
-    db_cursor.execute(f"SELECT {key} FROM stats WHERE id=%s", member.id)
-    return fetch_cursor("")
+    db_cursor.execute(f"SELECT {key} FROM stats WHERE id={member.id}")
+    return fetch_cursor(0)
 
 
 def set_stat(member: discord.Member, key: str, value):
-    ps = f"INSERT INTO accounts (id, {key}) VALUES ({member.id}, {value}) ON CONFLICT (id) DO UPDATE SET {key}=%s"
-    db_cursor.execute(ps, value)
+    ps = f"INSERT INTO stats (id, {key}) VALUES ({member.id}, {value}) ON CONFLICT (id) DO UPDATE SET {key}={value}"
+    db_cursor.execute(ps)
     db_connection.commit()
 
 
@@ -147,7 +120,8 @@ async def get_random_message(ctx: discord.ext.commands.Context, person: str):
     if 'messages' in guy:
         messages = guy['messages']
     else:
-        await ctx.send(random.choice(lookup_text).format(string_util.upper(person)))
+        sent_message = await ctx.send(random.choice(lookup_text).format(string_util.upper(person)))
+        await sent_message.delete(delay=10)
         messages = []
         for channel in ctx.guild.text_channels:
             async for message in channel.history(limit=500):
@@ -218,6 +192,14 @@ async def is_banned(member: discord.Member):
     return member in bans
 
 
+# @ori.command()
+# @commands.has_permissions(manage_messages=True)
+# async def reload(ctx):
+#     aliases = {}
+#     for member in ctx.guild.members:
+#         aliases[member.id]['aliases'].append(member.display_name)
+#
+
 # Easy Message Deleting
 
 @ori.command(aliases=['d'])
@@ -228,12 +210,12 @@ async def delete(ctx, amount=2):
 
 # @ori.command()
 # async def test6(ctx: discord.ext.commands.Context):
-#     points = get_points(ctx.author) + 1
-#     pinecones = get_pinecones(ctx.author) + 1
-#     print("points:", points, "pinecones:", pinecones)
-#     set_points(ctx.author, points)
-#     set_pinecones(ctx.author, pinecones)
-#     await ctx.send(f"you have {points} points and {pinecones} pinecones.")
+#     messages_sent = get_stat(ctx.author, 'messages_sent')
+#     slots_wins = get_stat(ctx.author, 'slots_wins')
+#     print("messages_sent:", messages_sent, "slots_wins:", slots_wins)
+#     set_stat(ctx.author, 'messages_sent', messages_sent + 1)
+#     set_stat(ctx.author, 'slots_wins', messages_sent + 2)
+#     await ctx.send(f"you have {messages_sent} messages sent and {slots_wins} slots wins.")
 
 
 # !ticket
@@ -323,7 +305,7 @@ async def akoot(ctx):
 # !joke command
 @ori.command()
 async def joke(ctx):
-    rs = RandomStuff(async_mode=True, api_key=api_key)
+    rs = RandomStuff(async_mode=True, api_key=keys['random_stuff'])
 
     _joke = rs.get_joke(_type="dev")
 
@@ -637,11 +619,15 @@ async def add_message(caller):
         json.dump(users, f)
 
 
-token_environment_key = "DISCORD_TOKEN"
+discord_token_environment_key = "DISCORD_TOKEN"
+random_stuff_token_environment_key = "RANDOM_STUFF_KEY"
 database_url_environment_key = "DATABASE_URL"
-if token_environment_key in os.environ:
+if discord_token_environment_key in os.environ:
     # Load token from the environment variable
-    token = os.environ[token_environment_key]
+
+    keys['discord'] = os.environ[discord_token_environment_key]
+
+    keys['random_stuff'] = os.environ[random_stuff_token_environment_key]
 
     # Load db
     result = re.match(r'\w+://(\w+):(\w+)@([a-z0-9.-]+):(\d+)/(\w+)', os.environ[database_url_environment_key])
@@ -649,9 +635,13 @@ if token_environment_key in os.environ:
 else:
     # Load auth token from 'auth.json'
     auth = io_util.load_json('auth.json')
-    token = auth['token']
+
+    keys['discord'] = auth['discord_token']
+
+    keys['random_stuff'] = auth['random_stuff_key']
+
     db = auth['db']
     connect_to_db(db['host'], db['database'], db['username'], db['password'])
 
 # Run Ori using the auth token object
-ori.run(token)
+ori.run(keys['discord'])
