@@ -11,8 +11,14 @@ from discord.ext import commands
 from googletrans import Translator
 from prsaw import RandomStuff
 
+from mcuuid import MCUUID
+from mcuuid.tools import is_valid_minecraft_username
+
 import util.io_util as io_util
 import util.string_util as string_util
+
+# custom colours
+cBlue = discord.Colour.from_rgb(126, 201, 241)
 
 keys = {}
 
@@ -62,7 +68,7 @@ def disconnect_from_db():
 
 def fetch_cursor(default):
     row = db_cursor.fetchone()
-    if row is None:
+    if row is None or row[0] is None:
         return default
     else:
         return row[0]
@@ -148,7 +154,11 @@ async def on_message(message):
     # Do this or else commands won't work!
     await ori.process_commands(message)
 
-    await add_message(message.author)
+    #await add_message(message.author)
+    messages_sent = get_stat(message.author, 'messages_sent') + 1
+    set_stat(message.author, 'messages_sent', messages_sent)
+
+    print(messages_sent)
 
     # banned words in chat
     for word in filtered_words:
@@ -543,7 +553,10 @@ async def slots(ctx):
     await ctx.send("".join(final))
 
     if all(element == final[0] for element in final):
-        await ctx.send(ctx.author.mention + " won! " + '<:opog:808534536270643270>')
+        slots_wins = get_stat(ctx.author,'slots_wins') + 1
+        await ctx.send(ctx.author.mention + " won! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
+        set_stat(ctx.author,'slots_wins', slots_wins)
+        
     else:
         await ctx.send("Better Luck next time!")
 
@@ -564,6 +577,46 @@ async def balance(ctx):
     m_bed.add_field(name="Messages", value=messages_amt)
 
     await ctx.send(embed=m_bed)
+
+# minecraft skin lookup tool
+@ori.command()
+async def skin(ctx,*,entry):
+
+    switch = is_valid_minecraft_username(entry)
+
+    try:
+        Player = MCUUID(name = entry)
+        id_ = Player.uuid
+
+
+        skin_Embed = discord.Embed(
+            colour = (discord.Colour.from_rgb(64, 221, 77)),
+            title = entry
+        )
+        
+        
+        skin_Embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+        skin_Embed.set_image(url = f'https://visage.surgeplay.com/full/512/{id_}.png')
+        await ctx.send(embed = skin_Embed)
+    except:
+        fail_Embed = discord.Embed(
+            colour = (discord.Colour.from_rgb(208, 37, 57)),
+            title = f"❌ user ({entry}) is not a valid minecraft username!"
+        )
+        fail_Embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+        await ctx.send(embed = fail_Embed)
+
+# message totals - slots wins
+@ori.command()
+async def stats(ctx):
+    messages_sent = get_stat(ctx.author, 'messages_sent')
+    slots_wins = get_stat(ctx.author,'slots_wins')
+    m_bed = discord.Embed(title=f"{ctx.author.name}'s Stats", colour = discord.Colour.from_rgb(126, 201, 241))
+    m_bed.add_field(name="Messages", value = messages_sent)
+    m_bed.add_field(name="Slots Wins", value = slots_wins)
+    m_bed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+
+    await ctx.send(embed = m_bed)
 
 
 # account systems - points(beg)
@@ -608,15 +661,15 @@ async def get_inv_data():
 
 
 # account systems - message counter
-async def add_message(caller):
-    await open_account(caller)
-    user = caller
-    users = await get_inv_data()
+# async def add_message(caller):
+    # await open_account(caller)
+    # user = caller
+    # users = await get_inv_data()
 
-    users[str(user.id)]["messages"] += 1
+    # users[str(user.id)]["messages"] += 1
 
-    with open("account.json", "w") as f:
-        json.dump(users, f)
+    # with open("account.json", "w") as f:
+        # json.dump(users, f)
 
 
 discord_token_environment_key = "DISCORD_TOKEN"
