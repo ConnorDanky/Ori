@@ -201,6 +201,12 @@ async def is_banned(member: discord.Member):
     bans = await member.guild.bans()
     return member in bans
 
+@ori.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        msg = '**Still on cooldown**, please try again is {:.2f}s'.format(error.retry_after)
+        await ctx.send(msg)
+
 
 # @ori.command()
 # @commands.has_permissions(manage_messages=True)
@@ -269,7 +275,7 @@ async def kick(ctx, member: discord.Member, *, reason="No reason given!"):
 
 # Polls
 @ori.command()
-@commands.has_role("mod-squad")
+# @commands.has_role("mod-squad")
 async def poll(ctx, question, choices):
     emote_list = ["regional_indicator_a", "regional_indicator_b", "regional_indicator_c", "regional_indicator_d",
                   "regional_indicator_e", "regional_indicator_f", "regional_indicator_g", "regional_indicator_h",
@@ -281,23 +287,34 @@ async def poll(ctx, question, choices):
     choice_list = choices.split("/")
     output = ""
     counter = 0
-    for i in choice_list:
-        output += ":" + emote_list[counter] + ":"
-        output += f" --- {choice_list[counter]} \n"
-        counter += 1
 
-    poll_embed = discord.Embed(
-        color=(discord.Color.greyple()),
-        title=f"Poll: {question}",
-        description=output
-    )
-    message = await ctx.send(embed=poll_embed)
+    user = ctx.author
+    points = get_points(user)
 
-    emote_counter = 0
-    for i in emote_list2:
-        if emote_counter < counter:
-            await message.add_reaction(i)
-            emote_counter += 1
+    if points >= 1000:
+        for i in choice_list:
+            output += ":" + emote_list[counter] + ":"
+            output += f" --- {choice_list[counter]} \n"
+            counter += 1
+
+        poll_embed = discord.Embed(
+            color=(discord.Color.greyple()),
+            title=f"Poll: {question}",
+            description=output
+        )
+        message = await ctx.send(embed=poll_embed)
+
+        emote_counter = 0
+        for i in emote_list2:
+            if emote_counter < counter:
+                await message.add_reaction(i)
+                emote_counter += 1
+
+        points -= 1000
+        set_points(user,points)
+
+    else:
+        await ctx.send("Sending a poll costs 1000 points!")
 
 
 @ori.command()
@@ -317,14 +334,14 @@ async def akoot(ctx):
 async def joke(ctx):
     rs = RandomStuff(async_mode=True, api_key=keys['random_stuff'])
 
-    _joke = rs.get_joke(_type="dev")
+    joke = rs.get_joke(_type="dev")
 
-    if _joke['type'] == 'single':
-        await ctx.send(_joke['joke'])
-    if _joke['type'] == 'twopart':
-        await ctx.send(_joke['setup'])
+    if joke['type'] == 'single':
+        await ctx.send(joke['joke'])
+    if joke['type'] == 'twopart':
+        await ctx.send(joke['setup'])
         time.sleep(3)
-        await ctx.send("||" + _joke['delivery'] + "||")
+        await ctx.send("||" + joke['delivery'] + "||")
 
 
 # !fort command
@@ -460,7 +477,7 @@ async def translate_en(ctx, *args):
 async def translate(ctx, msg, dest="en"):
     msg.lower()
     user = ctx.author
-    if msg is "help" and dest == "en":
+    if msg == "help" and dest == "en":
         lang_list = ""
         for lang in googletrans.LANGUAGES:
             lang_list += (f'{lang} - {googletrans.LANGUAGES[lang]}' + "\n")
@@ -538,43 +555,73 @@ async def test(ctx):
     if ctx.author.id in [435993495627628545, 143202195502923776]:
         await ctx.send('https://discord.gg/' + string_util.random_string(10))
 
+# admin tool to help resolve issues
+@ori.command()
+async def aud(ctx,user: discord.Member,key,*,value):
+    # Checks to see if its ConnorDanky_
+    if ctx.author.id == 435993495627628545:
+        if key == "points":
+            set_points(user,value)
+        elif key == "messages":
+            set_stat(user, 'messages_sent', value)
+        elif key == "slotwin":
+            set_stat(user, 'slots_wins', value)
+        elif key == "pinecone":
+            set_pinecones(user, value)
+
+
 
 # Slot bars
 slot_bars = [':ringed_planet:', ':mushroom:', ':rainbow:', '<:opog:808534536270643270>', ':gem:']
 
-
-# Slot Machine - Purely for fun. No money or anything
+# Slot Machine - Purely for fun. 
 @ori.command()
-async def slots(ctx):
-    final = []
-    for i in range(3):
-        a = random.choice(slot_bars)
-        final.append(a)
-    await ctx.send("".join(final))
+@commands.cooldown(1,15,commands.BucketType.user)
+async def slots(ctx,*,bet = 1):
+    user = ctx.author
+    points = get_points(user)
 
-    if all(element == final[0] for element in final):
-        slots_wins = get_stat(ctx.author,'slots_wins') + 1
-        await ctx.send(ctx.author.mention + " won! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
-        set_stat(ctx.author,'slots_wins', slots_wins)
-        
+    final = []
+    if (points > bet):
+        for i in range(3):
+            a = random.choice(slot_bars)
+            final.append(a)
+        await ctx.send("".join(final))
+
+        if all(element == final[0] for element in final):
+            slots_wins = get_stat(user,'slots_wins') + 1
+            await ctx.send(user.mention + " won! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
+            set_stat(user,'slots_wins', slots_wins)
+            points += (bet * 2)
+            
+        else:
+            await ctx.send("Better Luck next time!")
+            points -= bet
     else:
-        await ctx.send("Better Luck next time!")
+        await ctx.send("You don't have enough points to make that bet.")
+
+    set_points(user,points)
+
+
+
 
 
 # account systems - balance
 @ori.command()
 async def balance(ctx):
-    await open_account(ctx.author)
+    # await open_account(ctx.author)
     user = ctx.author
+    # users = await get_inv_data()
 
-    users = await get_inv_data()
+    # points_amt = users[str(user.id)]["points"]
+    # messages_amt = users[str(user.id)]["messages"]
 
-    points_amt = users[str(user.id)]["points"]
-    messages_amt = users[str(user.id)]["messages"]
+    points_amt = get_points(user)
+    pinecone_amt = get_pinecones(user)
 
-    m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Color.red())
+    m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Colour.from_rgb(9, 12, 155))
     m_bed.add_field(name="Points", value=points_amt)
-    m_bed.add_field(name="Messages", value=messages_amt)
+    m_bed.add_field(name="Pinecones", value=pinecone_amt)
 
     await ctx.send(embed=m_bed)
 
@@ -588,12 +635,10 @@ async def skin(ctx,*,entry):
         Player = MCUUID(name = entry)
         id_ = Player.uuid
 
-
         skin_Embed = discord.Embed(
             colour = (discord.Colour.from_rgb(64, 221, 77)),
             title = entry
-        )
-        
+        )        
         
         skin_Embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
         skin_Embed.set_image(url = f'https://visage.surgeplay.com/full/512/{id_}.png')
@@ -621,19 +666,23 @@ async def stats(ctx):
 
 # account systems - points(beg)
 @ori.command()
+@commands.cooldown(1,60,commands.BucketType.user)
 async def work(ctx):
-    await open_account(ctx.author)
-    user = ctx.author
-    users = await get_inv_data()
+    # await open_account(ctx.author)
+    # user = ctx.author
+    # users = await get_inv_data()
+
+    # users[str(user.id)]["points"] += earnings
+
+    # with open("account.json", "w") as f:
+        # json.dump(users, f)
 
     earnings = random.randrange(101)
     await ctx.send(f"You worked all day and got {earnings} points!!")
 
-    users[str(user.id)]["points"] += earnings
-
-    with open("account.json", "w") as f:
-        json.dump(users, f)
-
+    user_points = get_points(ctx.author) + earnings
+    set_points(ctx.author,user_points)
+    print(user_points)
 
 # account systems - opening account
 async def open_account(user):
@@ -659,6 +708,19 @@ async def get_inv_data():
 
     return users
 
+
+# Links!
+@ori.command()
+async def links(ctx):
+    link_embed = discord.Embed(title="Important Links!", color=discord.Colour.from_rgb(99, 69, 138))
+    link_embed.add_field(name="YouTube", value="https://www.youtube.com/channel/UCRG6rfEALDLTVSV52ttR7UQ", inline = True)
+    link_embed.add_field(name="Twitch", value ="https://www.twitch.tv/connordanky1", inline = True)
+    link_embed.add_field(name="Twitter", value = "https://twitter.com/connor_danky")
+    link_embed.add_field(name="Git Hub", value = "https://github.com/ConnorDanky")
+    link_embed.add_field(name="Reddit", value = "https://www.reddit.com/r/ConnorDanky/")
+    link_embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/773395896264163368/837545034550345778/unknown.png")
+    
+    await ctx.send(embed = link_embed)
 
 # account systems - message counter
 # async def add_message(caller):
