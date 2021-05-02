@@ -287,34 +287,25 @@ async def poll(ctx, question, choices):
     choice_list = choices.split("/")
     output = ""
     counter = 0
+    
+    for i in choice_list:
+        output += ":" + emote_list[counter] + ":"
+        output += f" --- {choice_list[counter]} \n"
+        counter += 1
 
-    user = ctx.author
-    points = get_points(user)
+    poll_embed = discord.Embed(
+        color=(discord.Color.greyple()),
+        title=f"Poll: {question}",
+        description=output
+    )
+    message = await ctx.send(embed=poll_embed)
 
-    if points >= 1000:
-        for i in choice_list:
-            output += ":" + emote_list[counter] + ":"
-            output += f" --- {choice_list[counter]} \n"
-            counter += 1
+    emote_counter = 0
+    for i in emote_list2:
+        if emote_counter < counter:
+            await message.add_reaction(i)
+            emote_counter += 1
 
-        poll_embed = discord.Embed(
-            color=(discord.Color.greyple()),
-            title=f"Poll: {question}",
-            description=output
-        )
-        message = await ctx.send(embed=poll_embed)
-
-        emote_counter = 0
-        for i in emote_list2:
-            if emote_counter < counter:
-                await message.add_reaction(i)
-                emote_counter += 1
-
-        points -= 1000
-        set_points(user,points)
-
-    else:
-        await ctx.send("Sending a poll costs 1000 points!")
 
 
 @ori.command()
@@ -582,7 +573,9 @@ async def slots(ctx,*,bet = 1):
     points = get_points(user)
 
     final = []
-    if (points > bet):
+    if (bet < 1):
+        await ctx.send("The bet must be at least 1 point!")
+    if (points > bet) and (bet > 0):
         for i in range(3):
             a = random.choice(slot_bars)
             final.append(a)
@@ -590,12 +583,12 @@ async def slots(ctx,*,bet = 1):
 
         if all(element == final[0] for element in final):
             slots_wins = get_stat(user,'slots_wins') + 1
-            await ctx.send(user.mention + " won! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
+            await ctx.send(user.mention + f" won {bet} point(s)! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
             set_stat(user,'slots_wins', slots_wins)
             points += (bet * 2)
             
         else:
-            await ctx.send("Better Luck next time!")
+            await ctx.send(f"You lost {bet} point(s). Better Luck next time!")
             points -= bet
     else:
         await ctx.send("You don't have enough points to make that bet.")
@@ -619,7 +612,7 @@ async def balance(ctx):
     points_amt = get_points(user)
     pinecone_amt = get_pinecones(user)
 
-    m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Colour.from_rgb(9, 12, 155))
+    m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Colour.from_rgb(128, 161, 212))
     m_bed.add_field(name="Points", value=points_amt)
     m_bed.add_field(name="Pinecones", value=pinecone_amt)
 
