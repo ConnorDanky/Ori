@@ -600,7 +600,7 @@ async def slots(ctx,*,bet = 1):
 
 
 # account systems - balance
-@ori.command()
+@ori.command(aliases=['bal'])
 async def balance(ctx):
     # await open_account(ctx.author)
     user = ctx.author
