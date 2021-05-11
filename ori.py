@@ -30,6 +30,7 @@ intents = discord.Intents().all()
 
 # Create Ori instance
 ori = commands.Bot(command_prefix='!', intents=intents)
+ori.remove_command("help")
 
 # Banned word list
 filtered_words = [
@@ -224,6 +225,85 @@ async def delete(ctx, amount=2):
     await ctx.channel.purge(limit=amount)
 
 
+@ori.group(invoke_without_command=True)
+async def help(ctx):
+    help_embed = discord.Embed(title = "Help", description = "Use `!help <command> for extended information on that command" , colour = discord.Colour.from_rgb(217, 214, 206))
+
+    help_embed.add_field(name = "Moderation", value = "kick, delete, stats, chelp, colour, balance")
+    help_embed.add_field(name = "Utility", value = "skin, trans, ud, define, ticket")
+    help_embed.add_field(name = "Fun", value = "slots, fort, work")
+
+    await ctx.send(embed = help_embed)
+
+@ori.command()
+async def chelp(ctx):
+    role_embed = discord.Embed(title="Colour Help!", colour = discord.Colour.from_rgb(49, 195, 72), description = "To change the colour type `!colour [emoji]` with the correct emoji!")
+    role_embed.add_field(name="🥶", value = "<@&837548121504481330>")
+    role_embed.add_field(name="🐋", value = "<@&837549614664122418>")
+    role_embed.add_field(name="🌿", value = "<@&837550801931993128>")
+    role_embed.add_field(name="🍌", value = "<@&837551549315153981>")
+    role_embed.add_field(name="🍋", value = "<@&837552083330269194>")
+    role_embed.add_field(name="🥥", value = "<@&837554703456927744>")
+    role_embed.add_field(name="🍊", value = "<@&837555150037844001>")
+    role_embed.add_field(name="🌶️", value = "<@&837555829405777951>")
+    role_embed.add_field(name="🍎", value = "<@&837556288891387915>")
+    role_embed.add_field(name="🍧", value = "<@&837556813825572904>")
+    role_embed.add_field(name="🍉", value = "<@&837557343146868757>")
+    role_embed.add_field(name="🍇", value = "<@&837557729777811458>")
+
+    await ctx.send(embed = role_embed)
+
+# Colour changing features
+@ori.command(aliases = ['color','colours','colors'])
+async def colour(ctx, colourRole):
+
+    blueberry_jam = ctx.guild.get_role(837548121504481330)
+    blue_raspberry = ctx.guild.get_role(837549614664122418)
+    wintergreen_mint = ctx.guild.get_role(837550801931993128)
+    banana_split = ctx.guild.get_role(837551549315153981)
+    lemonade = ctx.guild.get_role(837552083330269194)
+    toasted_coconut = ctx.guild.get_role(837554703456927744)
+    peach_tea = ctx.guild.get_role(837555150037844001)
+    chili_pepper = ctx.guild.get_role(837555829405777951)
+    fuji_apple = ctx.guild.get_role(837556288891387915)
+    dragonfruit = ctx.guild.get_role(837556813825572904)
+    watermelon_slushie = ctx.guild.get_role(837557343146868757)
+    grape_soda = ctx.guild.get_role(837557729777811458)
+
+    role_list = [blueberry_jam,blue_raspberry,wintergreen_mint,banana_split,lemonade,toasted_coconut,
+    peach_tea,chili_pepper,fuji_apple,dragonfruit,watermelon_slushie,grape_soda]
+
+    member = ctx.author
+
+    role_dict = {
+        "clear" : "no-role",
+        "🥶" : blueberry_jam,
+        "🐋" : blue_raspberry,
+        "🌿" : wintergreen_mint,
+        "🍌" : banana_split,
+        "🍋" : lemonade,
+        "🥥" : toasted_coconut,
+        "🍊" : peach_tea ,
+        "🌶️" : chili_pepper ,
+        "🍎" : fuji_apple ,
+        "🍧" : dragonfruit ,
+        "🍉" : watermelon_slushie ,
+        "🍇" : grape_soda
+    }
+
+    role = role_dict[colourRole]
+
+    for i in role_list:
+            await member.remove_roles(i)
+
+    if (role != "no-role"):
+        await member.add_roles(role)
+        await ctx.send(member.mention + f" is now @{role}")
+               
+    else:
+        await ctx.send("Colour set to clear!")
+
+
 # @ori.command()
 # async def test6(ctx: discord.ext.commands.Context):
 #     messages_sent = get_stat(ctx.author, 'messages_sent')
@@ -256,7 +336,7 @@ async def ticket(ctx, level, *, message):
 
     if level == "high":
         await ctx.send("Thanks for your report!")
-        await channel.send("<@&823299908105666620>")
+        await channel.send("<@&841459439655583764>")
         await channel.send(embed=ticket_high_embed)
     if level == "low":
         await ctx.send("Thanks for your report!")
@@ -567,7 +647,7 @@ slot_bars = [':ringed_planet:', ':mushroom:', ':rainbow:', '<:opog:8085345362706
 
 # Slot Machine - Purely for fun. 
 @ori.command()
-@commands.cooldown(1,15,commands.BucketType.user)
+@commands.cooldown(1,5,commands.BucketType.user)
 async def slots(ctx,*,bet = 1):
     user = ctx.author
     points = get_points(user)
@@ -575,21 +655,22 @@ async def slots(ctx,*,bet = 1):
     final = []
     if (bet < 1):
         await ctx.send("The bet must be at least 1 point!")
-    if (points > bet) and (bet > 0):
+    if (points >= bet) and (bet > 0):
         for i in range(3):
             a = random.choice(slot_bars)
             final.append(a)
         await ctx.send("".join(final))
+        points -= bet
 
         if all(element == final[0] for element in final):
             slots_wins = get_stat(user,'slots_wins') + 1
             await ctx.send(user.mention + f" won {bet} point(s)! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
             set_stat(user,'slots_wins', slots_wins)
-            points += (bet * 2)
+            points += (bet * 15)
             
         else:
             await ctx.send(f"You lost {bet} point(s). Better Luck next time!")
-            points -= bet
+            
     else:
         await ctx.send("You don't have enough points to make that bet.")
 
@@ -725,7 +806,8 @@ async def links(ctx):
 
     # with open("account.json", "w") as f:
         # json.dump(users, f)
-
+        
+    #
 
 discord_token_environment_key = "DISCORD_TOKEN"
 random_stuff_token_environment_key = "RANDOM_STUFF_KEY"
