@@ -30,7 +30,7 @@ translator = Translator()
 intents = discord.Intents().all()
 
 # Create Ori instance
-ori = commands.Bot(command_prefix='*', intents=intents)
+ori = commands.Bot(command_prefix='!', intents=intents)
 ori.remove_command("help")
 
 # Banned word list
