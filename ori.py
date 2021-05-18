@@ -3,6 +3,7 @@ import os
 import random
 import re
 import time
+import datetime
 
 import discord
 import googletrans
@@ -29,7 +30,7 @@ translator = Translator()
 intents = discord.Intents().all()
 
 # Create Ori instance
-ori = commands.Bot(command_prefix='!', intents=intents)
+ori = commands.Bot(command_prefix='*', intents=intents)
 ori.remove_command("help")
 
 # Banned word list
@@ -45,6 +46,11 @@ lookup_text = [
     "{0}! Always saying the wackiest stuff.. In fact, I have a list of quotes! let me find it hold on..."
 ]
 
+main_shop = [
+    {"name":"ConnorDanky Bobblehead","price": 0, "description":"Merch"},
+    {"name":"Akoot Mousepad","price": 0, "description":"Merch"},
+    {"name":"TOAST toaster","price": 0, "description":"Merch"}
+]
 peoples = io_util.load_json("people.json")
 
 # for key in peoples: print( f"@ori.command()\nasync def {key}(ctx):\n    message = await get_random_message(ctx,
@@ -79,6 +85,11 @@ def get_points(member: discord.Member):
     statement = f"SELECT points FROM accounts WHERE id={member.id}"
     db_cursor.execute(statement)
     return fetch_cursor(0)
+
+def sort_points():
+    statement = "SELECT id FROM accounts ORDER BY points;"
+    db_cursor.execute(statement)
+    return db_cursor.fetchall()
 
 
 def set_points(member: discord.Member, amount: int):
@@ -205,7 +216,7 @@ async def is_banned(member: discord.Member):
 @ori.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
-        msg = '**Still on cooldown**, please try again is {:.2f}s'.format(error.retry_after)
+        msg = '**Still on cooldown**, please try again in {:.2f}s'.format(error.retry_after)
         await ctx.send(msg)
 
 
@@ -223,6 +234,19 @@ async def on_command_error(ctx, error):
 @commands.has_permissions(manage_messages=True)
 async def delete(ctx, amount=2):
     await ctx.channel.purge(limit=amount)
+
+# testing for the sort points command
+@ori.command()
+async def test2(ctx):
+    print(sort_points())
+
+    pointsList = sort_points()
+    outStr = ""
+    for i in pointsList:
+        outStr = outStr + i + "\n"
+    
+    print(pointsList)
+    await ctx.send(outStr)
 
 
 @ori.group(invoke_without_command=True)
@@ -317,30 +341,47 @@ async def colour(ctx, colourRole):
 # !ticket
 @ori.command()
 async def ticket(ctx, level, *, message):
+    print(level)
+    print(message)
     member = ctx.author
     level = level.lower()
-    channel = discord.utils.get(member.guild.channels,
+    tick_channel = discord.utils.get(member.guild.channels,
                                 name="tickets")
     if message == "":
         return
-    ticket_high_embed = discord.Embed(
-        color=(discord.Color.gold()),
-        title=f"TICKET! (submitted by: {member.display_name})",
-        description="Importance: HIGH\n" + message + "\n"
-    )
-    ticket_low_embed = discord.Embed(
-        color=(discord.Color.dark_gold()),
-        title=f"TICKET! (submitted by: {member.display_name})",
-        description="Importance: LOW\n" + message + "\n"
-    )
-
+    
     if level == "high":
+        print("1")
+        ticket_embed = discord.Embed(
+                color=(discord.Color.gold()),
+                title=f"TICKET! (submitted by: {member.display_name})",
+                description="Importance: HIGH\n" + message + "\n",
+                timestamp = datetime.datetime.utcnow()
+            )
+        print('2')
+        ticket_embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+        print('3')
+        
+        print('4')
+        await ctx.channel.purge(limit=1)
         await ctx.send("Thanks for your report!")
-        await channel.send("<@&841459439655583764>")
-        await channel.send(embed=ticket_high_embed)
-    if level == "low":
+        await tick_channel.send("<@&841459439655583764>")
+        await tick_channel.send(embed=ticket_embed)
+
+    elif level == "low":
+
+        ticket_embed = discord.Embed(
+            color=(discord.Color.dark_gold()),
+            title=f"TICKET! (submitted by: {member.display_name})",
+            description="Importance: LOW\n" + message + "\n",
+            timestamp = datetime.datetime.utcnow()
+        )
+        ticket_embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+        ticket_embed.timestamp = datetime.datetime.utcnow()
+
+        await ctx.channel.purge(limit=1)
         await ctx.send("Thanks for your report!")
-        await channel.send(embed=ticket_low_embed)
+        await tick_channel.send(embed=ticket_embed)
 
 
 # Kicking Members
@@ -376,8 +417,10 @@ async def poll(ctx, question, choices):
     poll_embed = discord.Embed(
         color=(discord.Color.greyple()),
         title=f"Poll: {question}",
-        description=output
+        description=output,
+        timestamp = datetime.datetime.utcnow()
     )
+    poll_embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
     message = await ctx.send(embed=poll_embed)
 
     emote_counter = 0
@@ -640,12 +683,29 @@ async def aud(ctx,user: discord.Member,key,*,value):
         elif key == "pinecone":
             set_pinecones(user, value)
 
+# admin tool to help check users stats/points
+@ori.command()
+async def epm(ctx,user: discord.Member):
+    # Checks to see if its ConnorDanky_
+    if ctx.author.id == 435993495627628545:
+        a = get_points(user)
+        b = get_stat(user, 'messages_sent')
+        c = get_stat(user, 'slots_wins')
+        d = get_pinecones(user)
 
+        em = discord.Embed(title=f"{user.display_name}'s server info")
+        em.add_field(name = "Points", value = a)
+        em.add_field(name = "Messages Sent", value = b)
+        em.add_field(name = "Slot Wins", value = c)
+        em.add_field(name = "Pinecones", value = d)
+        em.set_thumbnail(url = user.avatar_url)
+
+        await ctx.send(embed = em)
 
 # Slot bars
 slot_bars = [':ringed_planet:', ':mushroom:', ':rainbow:', '<:opog:808534536270643270>', ':gem:']
 
-# Slot Machine - Purely for fun. 
+# Slot Machine - Purely for money. 
 @ori.command()
 @commands.cooldown(1,5,commands.BucketType.user)
 async def slots(ctx,*,bet = 1):
@@ -664,9 +724,10 @@ async def slots(ctx,*,bet = 1):
 
         if all(element == final[0] for element in final):
             slots_wins = get_stat(user,'slots_wins') + 1
-            await ctx.send(user.mention + f" won {bet} point(s)! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
+            winnings = bet * 15
+            await ctx.send(user.mention + f" won {winnings} point(s)! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
             set_stat(user,'slots_wins', slots_wins)
-            points += (bet * 15)
+            points += winnings
             
         else:
             await ctx.send(f"You lost {bet} point(s). Better Luck next time!")
@@ -677,7 +738,18 @@ async def slots(ctx,*,bet = 1):
     set_points(user,points)
 
 
+# main shop
+@ori.command(aliases=["shoppe"])
+async def shop(ctx):
+    em = discord.Embed(title = "Shop")
 
+    for item in main_shop:
+        name = item["name"]
+        price = item["price"]
+        desc = item["description"]
+
+        em.add_field(name = name, value = f"${price}|{desc}")
+    await ctx.send(embed = em)
 
 
 # account systems - balance
@@ -716,6 +788,7 @@ async def skin(ctx,*,entry):
         
         skin_Embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
         skin_Embed.set_image(url = f'https://visage.surgeplay.com/full/512/{id_}.png')
+        skin_Embed.set_thumbnail(url = f'https://visage.surgeplay.com/skin/{id_}.png')
         await ctx.send(embed = skin_Embed)
     except:
         fail_Embed = discord.Embed(
