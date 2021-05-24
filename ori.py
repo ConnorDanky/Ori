@@ -51,6 +51,24 @@ main_shop = [
     {"name":"Akoot Mousepad","price": 0, "description":"Merch"},
     {"name":"TOAST toaster","price": 0, "description":"Merch"}
 ]
+
+tictactoe_wins = [
+    [0,1,2],
+    [3,4,5],
+    [6,7,8],
+    [8,3,6],
+    [1,4,7],
+    [2,5,8],
+    [0,4,8],
+    [2,4,6]
+]
+player1 = ""
+player2 = ""
+turn = ""
+gameOver = True
+
+board = []
+
 peoples = io_util.load_json("people.json")
 
 # for key in peoples: print( f"@ori.command()\nasync def {key}(ctx):\n    message = await get_random_message(ctx,
@@ -394,6 +412,122 @@ async def kick(ctx, member: discord.Member, *, reason="No reason given!"):
     await member.kick(reason=reason)
 
 
+#TICTACTOE
+@ori.command()
+async def tictactoe(ctx, p1: discord.Member, p2: discord.Member):
+    global player1
+    global player2
+    global turn
+    global gameOver
+    global count
+
+    if p1 == p2:
+        await ctx.send("You cannot play against yourself.")
+        return
+
+    if gameOver:
+        global board
+        board = [":white_large_square:",":white_large_square:",":white_large_square:",
+                 ":white_large_square:",":white_large_square:",":white_large_square:",
+                 ":white_large_square:",":white_large_square:",":white_large_square:"]
+        turn = ""
+        gameOver = False
+        count = 0
+
+        player1 = p1
+        player2 = p2
+
+        #print the board
+        line = ""
+        for x in range(len(board)):
+            if x == 2 or x == 5 or x == 8:
+                line += " " + board[x]
+                await ctx.send(line)
+                line = ""
+            else:
+                line += " " + board[x]
+
+        # determine who goes first
+        num = random.randint(1,2)
+        if num == 1:
+            turn = player1
+            await ctx.send(f"It is {player1.display_name}'s turn.")
+        elif num == 2:
+            turn = player2
+            await ctx.send(f"It is {player2.display_name}'s turn.")
+    else:
+        await ctx.send("A game is already in progress! Finish that game before starting a new one!")
+
+# placing command for tictactoe game
+@ori.command()
+async def place(ctx, pos:int):
+    global turn
+    global player1
+    global player2
+    global board
+    global count
+    global gameOver
+
+    if not gameOver:
+        mark = ""
+        if turn == ctx.author:
+            if turn == player1:
+                mark = ":regional_indicator_x:"
+            elif turn == player2:
+                mark = ":o2:"
+            if 0 < pos < 10 and board[pos - 1] == ":white_large_square:":
+                board[pos - 1] = mark
+                count += 1
+
+                #print the board
+                line = ""
+                for x in range(len(board)):
+                    if x == 2 or x == 5 or x == 8:
+                        line += " " + board[x]
+                        await ctx.send(line)
+                        line = ""
+                    else:
+                        line += " " + board[x]
+
+                checkWinner(tictactoe_wins,mark)
+                if gameOver == True:
+                    await ctx.send(mark + " wins!")
+                    if turn == player1:
+                        pts = get_points(player1) + 10
+                        set_points(player1,pts)
+                        await ctx.send(f"{player1.display_name} recieves 10 points!")
+                    elif turn == player2:
+                        pts = get_points(player2) + 10
+                        set_points(player2,pts)
+                        await ctx.send(f"{player2.display_name} recieves 10 points!")
+                    
+                elif count >= 9:
+                    gameOver =  True
+                    await ctx.send("It was a tie!")
+                    
+
+                #switch turns
+                if turn == player1:
+                    turn = player2
+                elif turn == player2:
+                    turn = player1
+                
+
+            else:
+                await ctx.send("Please a pick a valid square (1-9) that isn't marked.")
+        else:
+            await ctx.send("It is not your turn!")
+    
+    else:
+        await ctx.send("Please start a new game using !tictactoe command.")
+
+
+def checkWinner(tictactoe_wins,mark):
+    global gameOver
+    for condition in tictactoe_wins:
+        if board[condition[0]] == mark and board[condition[1]] == mark and board[condition[2]] == mark:
+            gameOver = True
+
 # Polls
 @ori.command()
 # @commands.has_role("mod-squad")
@@ -701,6 +835,23 @@ async def epm(ctx,user: discord.Member):
         em.set_thumbnail(url = user.avatar_url)
 
         await ctx.send(embed = em)
+
+
+# gifting!
+@ori.command()
+async def gift(ctx,user:discord.Member,amount = 0):
+    if amount < 1:
+        await ctx.send("Must gift at l point.")
+    else:
+        gifter = ctx.author
+        gifterBal = get_points(gifter)
+        userBal = get_points(user)
+        if gifterBal >= amount:
+            gifterBal -= amount
+            userBal += amount
+            set_points(gifter,gifterBal)
+            set_points(user,userBal)
+            await ctx.send(f"You gifted {user.display_name} {amount} points!")
 
 # Slot bars
 slot_bars = [':ringed_planet:', ':mushroom:', ':rainbow:', '<:opog:808534536270643270>', ':gem:']
