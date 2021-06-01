@@ -197,7 +197,6 @@ async def on_message(message):
 
 
 # Support for welcoming new members
-# NEED TO ADD DM SUPPORT ON BOTH ENTERING AND LEAVING (HELP/LINK TO COME BACK)
 
 @ori.event
 async def on_member_join(member):
@@ -263,6 +262,12 @@ async def test2(ctx):
     for i in pointsList:
         outStr = outStr + i + "\n"
     
+    print(type(pointsList))
+    print()
+    print(type(pointsList[1]))
+
+    print(pointsList[1])
+    print()
     print(pointsList)
     await ctx.send(outStr)
 
@@ -369,18 +374,14 @@ async def ticket(ctx, level, *, message):
         return
     
     if level == "high":
-        print("1")
         ticket_embed = discord.Embed(
                 color=(discord.Color.gold()),
                 title=f"TICKET! (submitted by: {member.display_name})",
                 description="Importance: HIGH\n" + message + "\n",
                 timestamp = datetime.datetime.utcnow()
             )
-        print('2')
         ticket_embed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
-        print('3')
-        
-        print('4')
+
         await ctx.channel.purge(limit=1)
         await ctx.send("Thanks for your report!")
         await tick_channel.send("<@&841459439655583764>")
@@ -563,7 +564,17 @@ async def poll(ctx, question, choices):
             await message.add_reaction(i)
             emote_counter += 1
 
-
+@ori.command()
+async def ccn(ctx, member:discord.Member):
+    person = ctx.author
+    id_ = member.id
+    id_embed = discord.Embed(
+        color=(discord.Color.dark_purple()),
+        title=f"{member.display_name}'s ID",
+        description=f"ID : {id_}",
+        timestamp = datetime.datetime.utcnow()
+    )
+    await person.send(embed = id_embed)
 
 @ori.command()
 async def connor(ctx):
@@ -700,18 +711,22 @@ async def caleb(ctx):
     await ctx.send("> " + message + " *- " + string_util.upper("caleb") + "*")
 
 
-# # !berry command
-# @ori.command()
-# async def berry(ctx):
-#     a = random.choice(berry_quotes)
-#     await ctx.send("<:berry:805607350307782717> - " + a)
-#
-#
-# # !frozil command
-# @ori.command()
-# async def frozil(ctx):
-#     a = random.choice(frozil_quotes)
-#     await ctx.send("<:froz:804139444508557372> - " + a)
+@ori.command()
+async def grandpa(ctx):
+    message = await get_random_message(ctx, 'grandpa')
+    await ctx.send("> " + message + " *- " + string_util.upper("grandpa") + "*")
+
+
+@ori.command()
+async def somegirl(ctx):
+    message = await get_random_message(ctx, 'somegirl')
+    await ctx.send("> " + message + " *- " + string_util.upper("D") + "*")
+
+
+@ori.command()
+async def mc(ctx):
+    message = await get_random_message(ctx, 'mc')
+    await ctx.send("> " + message + " *- " + string_util.upper("mc") + "*")
 
 
 # translation english command
@@ -793,7 +808,7 @@ async def define(ctx, *args):
 # 'rs' command
 @ori.command(name='rs')
 async def random_screenshot(ctx):
-    await ctx.send('https://prnt.sc/' + string_util.random_string(random.randrange(6, 7, 1), numbers=True))
+    await ctx.send(f'https://prnt.sc/{string_util.random_string(random.randrange(6, 7, 1), numbers=True)}' )
 
 
 # 'test' command
@@ -851,7 +866,7 @@ async def gift(ctx,user:discord.Member,amount = 0):
             userBal += amount
             set_points(gifter,gifterBal)
             set_points(user,userBal)
-            await ctx.send(f"You gifted {user.display_name} {amount} points!")
+            await ctx.send(f"You gifted {user.display_name} {amount} {string_util.pluralize(amount, 'point')}.")
 
 # Slot bars
 slot_bars = [':ringed_planet:', ':mushroom:', ':rainbow:', '<:opog:808534536270643270>', ':gem:']
@@ -876,12 +891,12 @@ async def slots(ctx,*,bet = 1):
         if all(element == final[0] for element in final):
             slots_wins = get_stat(user,'slots_wins') + 1
             winnings = bet * 15
-            await ctx.send(user.mention + f" won {winnings} point(s)! They have won: " + str(slots_wins) + " times." + '<:opog:808534536270643270>')
+            await ctx.send(user.mention + f" won {winnings} {string_util.pluralize(winnings, 'point')}. They have won: {slots_wins} {string_util.pluralize(slots_wins, 'time')}." + '<:opog:808534536270643270>')
             set_stat(user,'slots_wins', slots_wins)
             points += winnings
             
         else:
-            await ctx.send(f"You lost {bet} point(s). Better Luck next time!")
+            await ctx.send(f"You lost {pts} {string_util.pluralize(pts, 'point')}. Better Luck next time!")
             
     else:
         await ctx.send("You don't have enough points to make that bet.")
@@ -906,12 +921,7 @@ async def shop(ctx):
 # account systems - balance
 @ori.command(aliases=['bal'])
 async def balance(ctx):
-    # await open_account(ctx.author)
     user = ctx.author
-    # users = await get_inv_data()
-
-    # points_amt = users[str(user.id)]["points"]
-    # messages_amt = users[str(user.id)]["messages"]
 
     points_amt = get_points(user)
     pinecone_amt = get_pinecones(user)
@@ -966,14 +976,6 @@ async def stats(ctx):
 @ori.command()
 @commands.cooldown(1,60,commands.BucketType.user)
 async def work(ctx):
-    # await open_account(ctx.author)
-    # user = ctx.author
-    # users = await get_inv_data()
-
-    # users[str(user.id)]["points"] += earnings
-
-    # with open("account.json", "w") as f:
-        # json.dump(users, f)
 
     earnings = random.randrange(101)
     await ctx.send(f"You worked all day and got {earnings} points!!")
@@ -981,30 +983,6 @@ async def work(ctx):
     user_points = get_points(ctx.author) + earnings
     set_points(ctx.author,user_points)
     print(user_points)
-
-# account systems - opening account
-async def open_account(user):
-    users = await get_inv_data()
-
-    # checks if an account exists
-    if str(user.id) in users:
-        return False
-    else:
-        users[str(user.id)] = {}
-        users[str(user.id)]["points"] = 0
-        users[str(user.id)]["messages"] = 0
-
-    with open("account.json", "w") as f:
-        json.dump(users, f)
-    return True
-
-
-# account systems - inventory data
-async def get_inv_data():
-    with open("account.json", "r") as f:
-        users = json.load(f)
-
-    return users
 
 
 # Links!
@@ -1020,18 +998,6 @@ async def links(ctx):
     
     await ctx.send(embed = link_embed)
 
-# account systems - message counter
-# async def add_message(caller):
-    # await open_account(caller)
-    # user = caller
-    # users = await get_inv_data()
-
-    # users[str(user.id)]["messages"] += 1
-
-    # with open("account.json", "w") as f:
-        # json.dump(users, f)
-        
-    #
 
 discord_token_environment_key = "DISCORD_TOKEN"
 random_stuff_token_environment_key = "RANDOM_STUFF_KEY"

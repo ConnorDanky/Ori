@@ -13,6 +13,13 @@ def range_array(_min, _max):
         array.append(x)
     return array
 
+# Pluralize a string - written by connor totally not copied from akoot ;)
+def pluralize(count:int, test:str):
+    if count == 1:
+        return text
+    else:
+        return text + 's'
+
 
 # Generate a random string
 def random_string(length, spaces=False, special=False, numbers=False, capitals=True, lowercase=True):
