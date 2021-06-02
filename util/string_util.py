@@ -14,7 +14,7 @@ def range_array(_min, _max):
     return array
 
 # Pluralize a string - written by connor totally not copied from akoot ;)
-def pluralize(count:int, test:str):
+def pluralize(count:int, text:str):
     if count == 1:
         return text
     else:

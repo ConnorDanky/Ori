@@ -105,7 +105,7 @@ def get_points(member: discord.Member):
     return fetch_cursor(0)
 
 def sort_points():
-    statement = "SELECT id FROM accounts ORDER BY points;"
+    statement = "SELECT id FROM accounts ORDER BY points DESC;"
     db_cursor.execute(statement)
     return db_cursor.fetchall()
 
@@ -253,23 +253,23 @@ async def delete(ctx, amount=2):
     await ctx.channel.purge(limit=amount)
 
 # testing for the sort points command
-@ori.command()
-async def test2(ctx):
-    print(sort_points())
-
+@ori.command(aliases=['lb'])
+async def leaderboard(ctx):
+    
     pointsList = sort_points()
+    counter = 1
     outStr = ""
     for i in pointsList:
-        outStr = outStr + i + "\n"
+        outStr += str(counter) + ". "
+        for id_ in i:            
+            user = ori.get_user(id_)
+            pts = get_points(user)            
+        outStr += f"{user.display_name} - {pts} points"
+        outStr += "\n"
+        counter += 1
+    leader_embed = discord.Embed(title = "Leaderboard", description = outStr, colour = discord.Colour.blurple() )
     
-    print(type(pointsList))
-    print()
-    print(type(pointsList[1]))
-
-    print(pointsList[1])
-    print()
-    print(pointsList)
-    await ctx.send(outStr)
+    await ctx.send(embed = leader_embed)
 
 
 @ori.group(invoke_without_command=True)
@@ -891,12 +891,16 @@ async def slots(ctx,*,bet = 1):
         if all(element == final[0] for element in final):
             slots_wins = get_stat(user,'slots_wins') + 1
             winnings = bet * 15
-            await ctx.send(user.mention + f" won {winnings} {string_util.pluralize(winnings, 'point')}. They have won: {slots_wins} {string_util.pluralize(slots_wins, 'time')}." + '<:opog:808534536270643270>')
+            word = string_util.pluralize(winnings, "point")
+            word2 = string_util.pluralize(slots_wins, "time")
+            await ctx.send(user.mention + f" won {winnings} {word}. They have won: {slots_wins} {word2}." + '<:opog:808534536270643270>')
             set_stat(user,'slots_wins', slots_wins)
             points += winnings
             
         else:
-            await ctx.send(f"You lost {pts} {string_util.pluralize(pts, 'point')}. Better Luck next time!")
+            word3 = string_util.pluralize(bet, "point")
+            otp = "You lost " + str(bet) + " " + word3 + ". Better Luck next time!"
+            await ctx.send(otp)
             
     else:
         await ctx.send("You don't have enough points to make that bet.")
