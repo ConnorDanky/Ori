@@ -3,3 +3,5 @@ googletrans~=3.1.0a0
 prsaw~=0.3.1
 psycopg2~=2.8.6
 mcuuid~=1.0.1
+youtube-dl~=2021.4.17
+PyNaCl~=1.4.0

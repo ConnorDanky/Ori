@@ -12,6 +12,8 @@ from discord.ext import commands
 from googletrans import Translator
 from prsaw import RandomStuff
 
+import youtube_dl
+
 from mcuuid import MCUUID
 from mcuuid.tools import is_valid_minecraft_username
 
@@ -244,6 +246,88 @@ async def on_command_error(ctx, error):
 #     for member in ctx.guild.members:
 #         aliases[member.id]['aliases'].append(member.display_name)
 #
+
+
+
+
+
+
+
+
+#MUSIC BOT STUFF - MIGHT NOT WORK...
+@ori.command()
+async def join(ctx):
+    voiceChannel = discord.utils.get(ctx.guild.voice_channels, name = "Music")
+    channel = ctx.author.voice.channel
+
+    if not ctx.author.voice.channel:
+        await ctx.send("You must be in a voice call to use Artemis.")
+    else:
+        await channel.connect()
+
+# Good method for youtube videos
+@ori.command()
+async def play(ctx, url: str):
+    song_there = os.path.isfile("song.webm")
+    try:
+        if song_there:
+            os.remove("song.webm")
+    except PermissionError:
+        await ctx.send("Wait for the current playing music to end or use the 'stop' command.")
+        return
+
+    
+    voice = discord.utils.get(ori.voice_clients, guild = ctx.guild)
+       
+
+    ydl_opts = {
+        'format' : '249/250/251',
+
+    }
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    for file in os.listdir("./"):
+        if file.endswith(".webm"):
+            os.rename(file,"song.webm")
+
+    voice.play(discord.FFmpegOpusAudio("song.webm"))
+
+@ori.command()
+async def leave(ctx):
+    voice = discord.utils.get(ori.voice_clients, guild = ctx.guild)
+    if voice.is_connected():
+        await voice.disconnect()
+    else:
+        await ctx.send("The bot is not connected to a voice channel.")
+
+@ori.command()
+async def pause(ctx):
+    voice = discord.utils.get(ori.voice_clients, guild = ctx.guild)
+    if voice.is_playing():
+        voice.pause()
+    else:
+        await ctx.send("Currently no audio playing.")
+
+@ori.command()
+async def resume(ctx):
+    voice = discord.utils.get(ori.voice_clients, guild = ctx.guild)
+    if voice.is_paused():
+        voice.resume()
+    else:
+        await ctx.send("The audio is not paused.")
+
+@ori.command()
+async def stop(ctx):
+    voice = discord.utils.get(ori.voice_clients, guild = ctx.guild)
+    voice.stop()
+
+
+
+
+
+
+
+
 
 # Easy Message Deleting
 
