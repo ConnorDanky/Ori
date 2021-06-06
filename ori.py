@@ -918,22 +918,36 @@ async def aud(ctx,user: discord.Member,key,*,value):
 
 # admin tool to help check users stats/points
 @ori.command()
-async def epm(ctx,user: discord.Member):
-    # Checks to see if its ConnorDanky_
-    if ctx.author.id == 435993495627628545:
-        a = get_points(user)
-        b = get_stat(user, 'messages_sent')
-        c = get_stat(user, 'slots_wins')
-        d = get_pinecones(user)
+async def epm(ctx,user: discord.Member = None):
+    if user == None:
+        user = ctx.author
 
-        em = discord.Embed(title=f"{user.display_name}'s server info")
-        em.add_field(name = "Points", value = a)
-        em.add_field(name = "Messages Sent", value = b)
-        em.add_field(name = "Slot Wins", value = c)
-        em.add_field(name = "Pinecones", value = d)
-        em.set_thumbnail(url = user.avatar_url)
+    a = get_points(user)
+    b = get_stat(user, 'messages_sent')
+    c = get_stat(user, 'slots_wins')
+    d = get_pinecones(user)
 
-        await ctx.send(embed = em)
+    em = discord.Embed(title=f"{user.display_name}'s server info")
+    em.add_field(name = "Points", value = a)
+    em.add_field(name = "Messages Sent", value = b)
+    em.add_field(name = "Slot Wins", value = c)
+    em.add_field(name = "Pinecones", value = d)
+    em.set_thumbnail(url = user.avatar_url)
+    em.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+
+    await ctx.send(embed = em)
+
+
+# robbing your friends!
+@ori.command()
+async def rob(ctx,user:discord.Member):
+    await ctx.send("A gun was pulled!")
+
+# buying command
+@ori.command()
+async def buy(ctx, key, amount):
+    user = ctx.author
+    await ctx.send(f"{user.display_name} just bought {amount} {key}!!")
 
 
 # gifting!
@@ -941,6 +955,8 @@ async def epm(ctx,user: discord.Member):
 async def gift(ctx,user:discord.Member,amount = 0):
     if amount < 1:
         await ctx.send("Must gift at l point.")
+    elif (ctx.author == user):
+        await ctx.send("You cannot gift yourself points.")
     else:
         gifter = ctx.author
         gifterBal = get_points(gifter)
@@ -996,29 +1012,32 @@ async def slots(ctx,*,bet = 1):
 @ori.command(aliases=["shoppe"])
 async def shop(ctx):
     em = discord.Embed(title = "Shop")
-
+    counter = 0
     for item in main_shop:
         name = item["name"]
         price = item["price"]
         desc = item["description"]
 
-        em.add_field(name = name, value = f"${price}|{desc}")
+        em.add_field(name = str(counter) + ". " + name, value = f"${price}|{desc}")
+        counter += 1
     await ctx.send(embed = em)
+
 
 
 # account systems - balance
 @ori.command(aliases=['bal'])
 async def balance(ctx):
-    user = ctx.author
+    # user = ctx.author
 
-    points_amt = get_points(user)
-    pinecone_amt = get_pinecones(user)
+    # points_amt = get_points(user)
+    # pinecone_amt = get_pinecones(user)
 
-    m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Colour.from_rgb(128, 161, 212))
-    m_bed.add_field(name="Points", value=points_amt)
-    m_bed.add_field(name="Pinecones", value=pinecone_amt)
+    # m_bed = discord.Embed(title=f"{ctx.author.name}'s balance", color=discord.Colour.from_rgb(128, 161, 212))
+    # m_bed.add_field(name="Points", value=points_amt)
+    # m_bed.add_field(name="Pinecones", value=pinecone_amt)
 
-    await ctx.send(embed=m_bed)
+    # await ctx.send(embed=m_bed)
+    await ctx.send("!bal is being phased out in favor of !epm. Try it out!")
 
 # minecraft skin lookup tool
 @ori.command()
@@ -1050,14 +1069,16 @@ async def skin(ctx,*,entry):
 # message totals - slots wins
 @ori.command()
 async def stats(ctx):
-    messages_sent = get_stat(ctx.author, 'messages_sent')
-    slots_wins = get_stat(ctx.author,'slots_wins')
-    m_bed = discord.Embed(title=f"{ctx.author.name}'s Stats", colour = discord.Colour.from_rgb(126, 201, 241))
-    m_bed.add_field(name="Messages", value = messages_sent)
-    m_bed.add_field(name="Slots Wins", value = slots_wins)
-    m_bed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
+    # messages_sent = get_stat(ctx.author, 'messages_sent')
+    # slots_wins = get_stat(ctx.author,'slots_wins')
+    # m_bed = discord.Embed(title=f"{ctx.author.name}'s Stats", colour = discord.Colour.from_rgb(126, 201, 241))
+    # m_bed.add_field(name="Messages", value = messages_sent)
+    # m_bed.add_field(name="Slots Wins", value = slots_wins)
+    # m_bed.set_footer(icon_url = ctx.author.avatar_url,text = f"Requested by {ctx.author}")
 
-    await ctx.send(embed = m_bed)
+    # await ctx.send(embed = m_bed)
+
+    await ctx.send("!stats is being phased out in favor of !epm. Try it out!")
 
 
 # account systems - points(beg)
