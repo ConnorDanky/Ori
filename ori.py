@@ -50,8 +50,9 @@ lookup_text = [
 
 main_shop = [
     {"name":"ConnorDanky Bobblehead","price": 0, "description":"Merch"},
-    {"name":"Akoot Mousepad","price": 0, "description":"Merch"},
-    {"name":"TOAST toaster","price": 0, "description":"Merch"}
+    {"name":"Akoot Cowboy Hat","price": 0, "description":"Merch"},
+    {"name":"TOAST toaster","price": 0, "description":"Merch"},
+    {"name":"Marshmellow Fluff Name Color", "price":2000, "description":"Name Color"}
 ]
 
 tictactoe_wins = [
@@ -149,6 +150,21 @@ def set_stat(member: discord.Member, key: str, value):
     ps = f"INSERT INTO stats (id, {key}) VALUES ({member.id}, {value}) ON CONFLICT (id) DO UPDATE SET {key}={value}"
     db_cursor.execute(ps)
     db_connection.commit()
+
+
+# database crap for the inventory
+def get_white_role(member: discord.Member):
+    statement = f"SELECT white_role FROM inv WHERE id={member.id}"
+    db_cursor.execute(statement)
+    return fetch_cursor(0)
+
+def set_white_role(member: discord.Member, amount: int):
+    key = "white_role"
+    ps = f"INSERT INTO inv (id, {key}) VALUES ({member.id}, {amount}) ON CONFLICT (id) DO UPDATE SET {key}={amount}"
+    print(ps)
+    db_cursor.execute(ps)
+    db_connection.commit()
+
 
 
 # get a random message from a Member
@@ -382,6 +398,11 @@ async def chelp(ctx):
     role_embed.add_field(name="🍉", value = "<@&837557343146868757>")
     role_embed.add_field(name="🍇", value = "<@&837557729777811458>")
 
+    check_white = get_white_role(ctx.author)
+    if check_white == 1:
+        role_embed.add_field(name="**Premium Color**", value = "-------------------------", inline=False)
+        role_embed.add_field(name="🍙", value="<@&849486076338634832>")
+
     await ctx.send(embed = role_embed)
 
 # Colour changing features
@@ -401,8 +422,11 @@ async def colour(ctx, colourRole):
     watermelon_slushie = ctx.guild.get_role(837557343146868757)
     grape_soda = ctx.guild.get_role(837557729777811458)
 
+    # premium! 
+    marshmellow_fluff = ctx.guild.get_role(849486076338634832)
+
     role_list = [blueberry_jam,blue_raspberry,wintergreen_mint,banana_split,lemonade,toasted_coconut,
-    peach_tea,chili_pepper,fuji_apple,dragonfruit,watermelon_slushie,grape_soda]
+    peach_tea,chili_pepper,fuji_apple,dragonfruit,watermelon_slushie,grape_soda,marshmellow_fluff]
 
     member = ctx.author
 
@@ -419,10 +443,17 @@ async def colour(ctx, colourRole):
         "🍎" : fuji_apple ,
         "🍧" : dragonfruit ,
         "🍉" : watermelon_slushie ,
-        "🍇" : grape_soda
+        "🍇" : grape_soda,
+        "🍙" : marshmellow_fluff
     }
 
     role = role_dict[colourRole]
+
+    if role == marshmellow_fluff:
+        check_white = get_white_role(ctx.author)
+        if check_white == "0":
+            await ctx.send("You have not unlocked this color yet.")
+            return
 
     for i in role_list:
             await member.remove_roles(i)
@@ -945,16 +976,34 @@ async def rob(ctx,user:discord.Member):
 
 # buying command
 @ori.command()
-async def buy(ctx, key, amount):
+async def buy(ctx, key : int, amount = 1):
     user = ctx.author
-    await ctx.send(f"{user.display_name} just bought {amount} {key}!!")
+    one = 1
+    if key == 3:
+        has_role = get_white_role(user)
+        pts = get_points(user)
+        if has_role == 0:
+            if pts >= 2000:
+                set_white_role(user,one)
+                await ctx.send(f"{user.display_name} just purchased The White Name Colour for 2000 points!")
+                pts -= 2000
+                set_points(user, pts)
+            else:
+                await ctx.send("You do not enough points to purchase the item!")
+        else:
+            await ctx.send("You have already purchased this item!")
 
+# fix thing
+@ori.command()
+async def qwe(ctx):
+    if ctx.author.id == 435993495627628545:
+        set_white_role(ctx.author, 0)
 
 # gifting!
 @ori.command()
 async def gift(ctx,user:discord.Member,amount = 0):
     if amount < 1:
-        await ctx.send("Must gift at l point.")
+        await ctx.send("Must gift at least 1 point.")
     elif (ctx.author == user):
         await ctx.send("You cannot gift yourself points.")
     else:
