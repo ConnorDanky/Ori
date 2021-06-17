@@ -357,16 +357,24 @@ async def delete(ctx, amount=2):
 async def leaderboard(ctx):
     
     pointsList = sort_points()
+    print(pointsList)
     counter = 1
     outStr = ""
-    for i in pointsList:
-        outStr += str(counter) + ". "
-        for id_ in i:            
-            user = ori.get_user(id_)
-            pts = get_points(user)            
+    for i in pointsList:        
+        # akoot made this try block so if it doesn't work blame him 
+        try:
+            for id_ in i:
+                user = ori.get_user(id_)
+                if not user:
+                    raise Exception()
+                pts = get_points(user)
+        except Exception:
+            continue
+        outStr += str(counter) + ". "         
         outStr += f"{user.display_name} - {pts} points"
         outStr += "\n"
         counter += 1
+        print(outStr)
     leader_embed = discord.Embed(title = "Leaderboard", description = outStr, colour = discord.Colour.blurple() )
     
     await ctx.send(embed = leader_embed)
