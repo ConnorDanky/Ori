@@ -151,6 +151,10 @@ def set_stat(member: discord.Member, key: str, value):
     db_cursor.execute(ps)
     db_connection.commit()
 
+def sort_stat(key: str):
+    statement = f"SELECT id FROM stats ORDER BY {key} DESC;"
+    db_cursor.execute(statement)
+    return db_cursor.fetchall()
 
 # database crap for the inventory
 def get_white_role(member: discord.Member):
@@ -378,6 +382,29 @@ async def leaderboard(ctx):
     leader_embed = discord.Embed(title = "Leaderboard", description = outStr, colour = discord.Colour.blurple() )
     
     await ctx.send(embed = leader_embed)
+
+@ori.command(aliases=[])
+async def slotwins(ctx):
+    winList = sort_stat('slots_wins')
+    counter = 1
+    outStr=""
+    for i in winList:
+        try:
+            for id_ in i:
+                user = ori.get_user(id_)
+                if not user:
+                    raise Exception()
+                wins = get_stat(user, 'slots_wins')
+        except Exception:
+            continue
+        if wins != 0:
+            outStr += str(counter) + ". "
+            outStr += f"{user.display_name} - {wins} wins"
+            outStr += "\n"
+            counter += 1
+    wins_embed = discord.Embed(title = "Slots Leaderboard", description = outStr, colour = discord.Colour.blurple())
+
+    await ctx.send(embed = wins_embed)
 
 
 @ori.group(invoke_without_command=True)
