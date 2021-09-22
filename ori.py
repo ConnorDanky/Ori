@@ -20,6 +20,9 @@ from mcuuid.tools import is_valid_minecraft_username
 import util.io_util as io_util
 import util.string_util as string_util
 
+import baseball
+from baseball import response
+
 # custom colours
 cBlue = discord.Colour.from_rgb(126, 201, 241)
 
@@ -510,6 +513,17 @@ async def colour(ctx, colourRole):
 #     set_stat(ctx.author, 'slots_wins', messages_sent + 2)
 #     await ctx.send(f"you have {messages_sent} messages sent and {slots_wins} slots wins.")
 
+@ori.command()
+async def baseball(ctx, team = ""):
+    print("baseball.py")
+    score = response("today" , team.upper())
+    games_embed = discord.Embed(
+                color=(discord.Color.gold()),
+                title="Games",
+                description= score,
+                timestamp = datetime.datetime.utcnow()
+            )
+    await ctx.send(embed = games_embed)
 
 # !ticket
 @ori.command()
