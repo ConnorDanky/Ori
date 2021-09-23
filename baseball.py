@@ -8,7 +8,7 @@ import json
 def response(date, team = ""):
     print(team)
     global now 
-    now = datetime.datetime.now()
+    now = datetime.now()
     global yesterday 
     yesterday = datetime.now() - timedelta(days=1)
 
@@ -139,6 +139,7 @@ def date_url(date):
     else:
         baseball_url = "http://gd2.mlb.com/components/game/mlb/year_%d/month_%s/day_%s/master_scoreboard.json" \
                 % (now.year, now.strftime("%m"), now.strftime("%d"))
+    print(now)
     print(baseball_url)
     return baseball_url
 
