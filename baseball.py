@@ -140,6 +140,7 @@ def date_url(date):
         baseball_url = "http://gd2.mlb.com/components/game/mlb/year_%d/month_%s/day_%s/master_scoreboard.json" \
                 % (now.year, now.strftime("%m"), now.strftime("%d"))
     print(now)
+    print(now.strftime("%Z"))
     print(baseball_url)
     return baseball_url
 
