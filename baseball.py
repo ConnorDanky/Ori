@@ -8,7 +8,7 @@ import json
 def response(date, team = ""):
     print(team)
     global now 
-    now = datetime.now('US/Pacific')
+    now = datetime.now(tz='US/Pacific')
     global yesterday 
     yesterday = datetime.now() - timedelta(days=1)
 
