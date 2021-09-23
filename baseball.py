@@ -7,8 +7,9 @@ import json
 
 def response(date, team = ""):
     print(team)
+    tz = pytz.timezone('US/Pacific')
     global now 
-    now = datetime.now(tz='US/Pacific')
+    now = datetime.now(tz)
     global yesterday 
     yesterday = datetime.now() - timedelta(days=1)
 
