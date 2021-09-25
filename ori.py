@@ -20,8 +20,11 @@ from mcuuid.tools import is_valid_minecraft_username
 import util.io_util as io_util
 import util.string_util as string_util
 
-import baseball
-from baseball import response
+import baseball_connor
+from baseball_connor import response
+
+import pinecone
+from pinecone import calculate_new_price
 
 # custom colours
 cBlue = discord.Colour.from_rgb(126, 201, 241)
@@ -515,8 +518,7 @@ async def colour(ctx, colourRole):
 
 @ori.command()
 async def baseball(ctx, team = ""):
-    print("baseball.py")
-    score = response("today" , team.upper())
+    score = response(team)
     games_embed = discord.Embed(
                 color=(discord.Color.gold()),
                 title="Games",
