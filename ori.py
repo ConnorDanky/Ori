@@ -519,13 +519,16 @@ async def colour(ctx, colourRole):
 @ori.command()
 async def baseball(ctx, team = ""):
     score = response(team)
+    output = f"```{score}```"
     games_embed = discord.Embed(
                 color=(discord.Color.gold()),
                 title="Games",
                 description= score,
                 timestamp = datetime.datetime.utcnow()
             )
-    await ctx.send(embed = games_embed)
+    #score.replace(" ", "⠀")
+    await ctx.send(output)
+    #await ctx.send(embed = games_embed)
 
 # !ticket
 @ori.command()
