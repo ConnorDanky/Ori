@@ -10,8 +10,6 @@ import googletrans
 import psycopg2
 from discord.ext import commands
 from googletrans import Translator
-from prsaw import RandomStuff
-
 import youtube_dl
 
 from mcuuid import MCUUID
@@ -23,7 +21,6 @@ import util.string_util as string_util
 import baseball_connor
 from baseball_connor import response
 
-import pinecone
 from pinecone import calculate_new_price
 
 # custom colours
@@ -112,21 +109,22 @@ def get_epoch_time():
     return int(time.time())
 
 # this will add the price to the table
-def update_pinecone_price(price: float):
-    db_cursor.execute(f"insert into pinecone values ({price}, {get_epoch_time()})")
+def update_pinecone_price(price: int):
+    db_cursor.execute(f"insert into pinecone values ({price}, {time.time()})")
     db_connection.commit()
 
 # the price of pinecones will be generated every time you query for it, instead of having a timer
 def get_pinecone_price():
     # get current price
-    current_price = db_cursor.execute("select price from pinecone order by time desc limit 1").fetch_cursor(0)
+    db_cursor.execute("select price from pinecone order by time desc limit 1")
+    current_price: int = fetch_cursor(0)
+
     # calculate new price based on current price
-    new_price = pinecone.calculate_new_price(current_price)
+    new_price = calculate_new_price(current_price)
 
     # add that new to the table
     update_pinecone_price(new_price)
 
-    
     # finally, return the new price
     return new_price
 
@@ -1254,8 +1252,6 @@ else:
     auth = io_util.load_json('auth.json')
 
     keys['discord'] = auth['discord_token']
-
-    keys['random_stuff'] = auth['random_stuff_key']
 
     db = auth['db']
     connect_to_db(db['host'], db['database'], db['username'], db['password'])
