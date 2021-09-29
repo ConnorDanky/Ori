@@ -14,3 +14,12 @@ def calculate_new_price(current_price: float):
     
     current_price = 0 if current_price < 0 else current_price
     return current_price
+
+def main():
+    cost = 10
+    counter = 1
+    while counter < 500:
+        counter+=1
+        cost = calculate_new_price(cost)
+        print (cost)
+

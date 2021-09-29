@@ -107,6 +107,29 @@ def fetch_cursor(default):
     else:
         return row[0]
 
+# might come in handy later or elsewhere
+def get_epoch_time():
+    return int(time.time())
+
+# this will add the price to the table
+def update_pinecone_price(price: float):
+    db_cursor.execute(f"insert into pinecone values ({price}, {get_epoch_time()})")
+    db_connection.commit()
+
+# the price of pinecones will be generated every time you query for it, instead of having a timer
+def get_pinecone_price():
+    # get current price
+    current_price = db_cursor.execute("select price from pinecone order by time desc limit 1").fetch_cursor(0)
+    # calculate new price based on current price
+    new_price = pinecone.calculate_new_price(current_price)
+
+    # add that new to the table
+    update_pinecone_price(new_price)
+
+    
+    # finally, return the new price
+    return new_price
+
 
 def get_points(member: discord.Member):
     statement = f"SELECT points FROM accounts WHERE id={member.id}"
@@ -274,7 +297,9 @@ async def on_command_error(ctx, error):
 #
 
 
-
+@ori.command()
+async def pinecone(ctx):
+    await ctx.send(f"The price of 1 pinecone is {get_pinecone_price()} points!")
 
 
 
