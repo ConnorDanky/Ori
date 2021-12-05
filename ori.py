@@ -23,6 +23,8 @@ from baseball_connor import response
 
 from pinecone import calculate_new_price
 
+from e import e
+
 # custom colours
 cBlue = discord.Colour.from_rgb(126, 201, 241)
 
@@ -226,6 +228,11 @@ async def on_ready():
 # on_message event
 @ori.event
 async def on_message(message):
+    #im list
+    im_list = [
+    "im", "IM", "iM", "Im", "i'm", "I'M", "i'M", "I'm", 
+]
+
     # don't respond to ourselves
     if message.author == ori.user:
         return  # Do nothing
@@ -244,6 +251,13 @@ async def on_message(message):
         if word in message.content:
             await message.delete()
 
+    channelMSG = message.channel
+
+    for word in im_list:
+        if word in message.content:
+            txt = message.content
+            splitMSG = txt.split(word, 1)
+            await channelMSG.send(f"Hi {splitMSG[1]} , I'm Ori!")
 
 # Support for welcoming new members
 
@@ -793,6 +807,12 @@ async def joke(ctx):
         await ctx.send(joke['setup'])
         time.sleep(3)
         await ctx.send("||" + joke['delivery'] + "||")
+
+# !time command
+@ori.command()
+async def time(ctx):
+    disp = e()
+    await ctx.send(f"The current time is {disp}")
 
 
 # !fort command
